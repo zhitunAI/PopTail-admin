@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --background: #07110d;
+  --foreground: #f6fff2;
+  --muted: #b9c7b5;
+  --accent: #c9ff4a;
+  --accent-strong: #d9ff73;
+  --accent-foreground: #07110d;
+  --ring: #c9ff4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(201, 255, 74, 0.18), transparent 34rem),
+    radial-gradient(circle at 84% 8%, rgba(68, 255, 213, 0.14), transparent 28rem),
+    linear-gradient(180deg, #07110d 0%, #0b1712 48%, #050807 100%);
+  color: var(--foreground);
+  font-family:
+    "Space Grotesk",
+    "IBM Plex Sans",
+    "SF Pro Display",
+    sans-serif;
+}
+
+::selection {
+  background: rgba(201, 255, 74, 0.35);
+}
+
+.grain::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.glow-orb {
+  position: absolute;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 999px;
+  background: rgba(201, 255, 74, 0.18);
+  filter: blur(70px);
+  animation: drift 11s ease-in-out infinite alternate;
+}
+
+.console-grid {
+  background-image:
+    linear-gradient(rgba(201, 255, 74, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 255, 74, 0.08) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(42px, -26px, 0) scale(1.08);
+  }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: float-up 0.72s ease both;
+}

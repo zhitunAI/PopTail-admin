@@ -1,0 +1,14 @@
+.DS_Store
+*.tsbuildinfo
+.env.local
+.env.*.local
+backend/target/
+backend/gaa_auth.db
+frontend/node_modules/
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/.turbo/
+frontend/.vite/
+frontend/.cache/
+public-frontend/.next/
+public-frontend/node_modules/

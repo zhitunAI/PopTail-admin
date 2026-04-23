@@ -1,0 +1,62 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vue-rust-admin-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      GAA_BIND_ADDR: ${GAA_BIND_ADDR:-0.0.0.0:8888}
+      GAA_DATABASE_URL: ${GAA_DATABASE_URL:?set GAA_DATABASE_URL}
+      GAA_REDIS_URL: ${GAA_REDIS_URL:-redis://redis:6379/0}
+      GAA_JWT_SECRET: ${GAA_JWT_SECRET:?set GAA_JWT_SECRET}
+      GAA_SERVICE_MODERATION_TOKEN: ${GAA_SERVICE_MODERATION_TOKEN:?set GAA_SERVICE_MODERATION_TOKEN}
+      GAA_BOOTSTRAP_ADMIN_PASSWORD: ${GAA_BOOTSTRAP_ADMIN_PASSWORD:?set GAA_BOOTSTRAP_ADMIN_PASSWORD}
+      GAA_DEFAULT_USER_PASSWORD: ${GAA_DEFAULT_USER_PASSWORD:?set GAA_DEFAULT_USER_PASSWORD}
+      GAA_MULTIPOINT_ENABLED: ${GAA_MULTIPOINT_ENABLED:-true}
+      GAA_COMPATIBILITY_REFRESH_HEADERS: ${GAA_COMPATIBILITY_REFRESH_HEADERS:-true}
+      RUST_LOG: ${RUST_LOG:-info}
+    ports:
+      - "8888:8888"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: vue-rust-admin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gaa_auth
+      POSTGRES_USER: gaa
+      POSTGRES_PASSWORD: ${GAA_POSTGRES_PASSWORD:?set GAA_POSTGRES_PASSWORD}
+    ports:
+      - "15432:5432"
+    volumes:
+      - vue-rust-admin-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gaa -d gaa_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: vue-rust-admin-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "16379:6379"
+    volumes:
+      - vue-rust-admin-redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vue-rust-admin-postgres:
+  vue-rust-admin-redis:
