@@ -42,6 +42,7 @@ pub struct UserInfo {
 pub struct UserRecord {
     pub info: UserInfo,
     pub password: String,
+    pub token_version: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -86,6 +87,17 @@ pub struct UserInfoPayload {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BootstrapPayload {
+    #[serde(rename = "userInfo")]
+    pub user_info: UserInfo,
+    #[serde(rename = "policyPaths")]
+    pub policy_paths: Vec<CasbinInfo>,
+    pub menus: Vec<MenuInfo>,
+    #[serde(rename = "authorityButtons")]
+    pub authority_buttons: Vec<AuthorityButtonMatrixBatchSelectionItem>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DecisionPayload {
     pub accepted: bool,
     #[serde(rename = "auditId")]
@@ -98,6 +110,8 @@ pub struct SwitchAuthorityPayload {
     pub token: String,
     #[serde(rename = "expiresAt")]
     pub expires_at: i64,
+    #[serde(rename = "refreshToken", skip_serializing_if = "Option::is_none")]
+    pub refresh_token: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -513,6 +527,8 @@ pub struct ProfileUpdateRequest {
     pub nick_name: String,
     pub phone: String,
     pub email: String,
+    #[serde(default)]
+    pub password: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -586,8 +602,23 @@ pub struct AuthorityButtonMatrixRequest {
     pub selected: Vec<u64>,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct AuthorityButtonMatrixBatchRequest {
+    #[serde(rename = "authorityId")]
+    pub authority_id: u32,
+    #[serde(rename = "menuIDs", default)]
+    pub menu_ids: Vec<u64>,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct AuthorityButtonMatrixSelection {
+    pub selected: Vec<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AuthorityButtonMatrixBatchSelectionItem {
+    #[serde(rename = "menuID")]
+    pub menu_id: u64,
     pub selected: Vec<u64>,
 }
 
@@ -648,6 +679,11 @@ pub struct MenuUpsertRequest {
     pub menu_btn: Vec<MenuButtonInfo>,
     #[serde(default)]
     pub parameters: Vec<MenuParameterInfo>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct MenuBatchUpsertRequest {
+    pub menus: Vec<MenuUpsertRequest>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -852,6 +888,21 @@ pub struct EmailRecord {
     pub created_at: i64,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EmailPresetRecord {
+    #[serde(rename = "ID")]
+    pub id: u64,
+    pub name: String,
+    pub description: String,
+    pub to: String,
+    pub subject: String,
+    pub body: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: i64,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: i64,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct EmailSendRequest {
     #[serde(default)]
@@ -860,6 +911,28 @@ pub struct EmailSendRequest {
     pub subject: Option<String>,
     #[serde(default)]
     pub body: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct EmailPresetListRequest {
+    #[serde(default)]
+    pub page: Option<usize>,
+    #[serde(rename = "pageSize", default)]
+    pub page_size: Option<usize>,
+    #[serde(default)]
+    pub name: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct EmailPresetUpsertRequest {
+    #[serde(rename = "ID", default)]
+    pub id: Option<u64>,
+    pub name: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    pub to: String,
+    pub subject: String,
+    pub body: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1317,15 +1390,9 @@ pub struct DelegationInput {
 }
 
 #[derive(Clone, Debug)]
-pub struct SessionRecord {
-    pub session_id: String,
+pub struct UserAuthStateRecord {
     pub user_id: u64,
-    pub authority_id: u32,
-    pub access_jti: String,
-    pub refresh_jti: String,
-    pub expires_at: i64,
-    pub refresh_expires_at: i64,
-    pub revoked: bool,
+    pub token_version: u64,
 }
 
 #[derive(Clone, Debug, Serialize)]

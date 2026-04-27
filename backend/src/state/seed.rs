@@ -24,42 +24,42 @@ pub(super) fn redact_url_secret(url: &str) -> String {
 }
 
 pub(super) fn read_service_token() -> Result<String, String> {
-    match std::env::var("GAA_SERVICE_MODERATION_TOKEN") {
+    match std::env::var("POP_TAIL_SERVICE_MODERATION_TOKEN") {
         Ok(value) if is_strong_runtime_secret(&value) => Ok(value),
         Ok(_) if is_production_env() => Err(
-            "GAA_SERVICE_MODERATION_TOKEN must be at least 32 characters in production".to_string(),
+            "POP_TAIL_SERVICE_MODERATION_TOKEN must be at least 32 characters in production".to_string(),
         ),
         Ok(value) => Ok(value),
         Err(_) if is_production_env() => {
-            Err("GAA_SERVICE_MODERATION_TOKEN must be set in production".to_string())
+            Err("POP_TAIL_SERVICE_MODERATION_TOKEN must be set in production".to_string())
         }
         Err(_) => Ok("svc-moderation-token".to_string()),
     }
 }
 
 pub(super) fn read_bootstrap_admin_password() -> Result<String, String> {
-    match std::env::var("GAA_BOOTSTRAP_ADMIN_PASSWORD") {
+    match std::env::var("POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD") {
         Ok(value) if is_strong_password(&value) => Ok(value),
         Ok(_) if is_production_env() => Err(
-            "GAA_BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters in production".to_string(),
+            "POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters in production".to_string(),
         ),
         Ok(value) => Ok(value),
         Err(_) if is_production_env() => {
-            Err("GAA_BOOTSTRAP_ADMIN_PASSWORD must be set in production".to_string())
+            Err("POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD must be set in production".to_string())
         }
         Err(_) => Ok("123456".to_string()),
     }
 }
 
 pub(super) fn read_default_user_password() -> Result<String, String> {
-    match std::env::var("GAA_DEFAULT_USER_PASSWORD") {
+    match std::env::var("POP_TAIL_DEFAULT_USER_PASSWORD") {
         Ok(value) if is_strong_password(&value) => Ok(value),
         Ok(_) if is_production_env() => Err(
-            "GAA_DEFAULT_USER_PASSWORD must be at least 12 characters in production".to_string(),
+            "POP_TAIL_DEFAULT_USER_PASSWORD must be at least 12 characters in production".to_string(),
         ),
         Ok(value) => Ok(value),
         Err(_) if is_production_env() => {
-            Err("GAA_DEFAULT_USER_PASSWORD must be set in production".to_string())
+            Err("POP_TAIL_DEFAULT_USER_PASSWORD must be set in production".to_string())
         }
         Err(_) => Ok("123456".to_string()),
     }
@@ -76,35 +76,11 @@ pub(super) fn is_strong_password(value: &str) -> bool {
 }
 
 pub(super) fn is_production_env() -> bool {
-    std::env::var("GAA_ENV")
+    std::env::var("POP_TAIL_ENV")
         .or_else(|_| std::env::var("RUST_ENV"))
         .or_else(|_| std::env::var("APP_ENV"))
         .map(|value| matches!(value.to_ascii_lowercase().as_str(), "prod" | "production"))
         .unwrap_or(false)
-}
-
-pub(super) fn build_active_sessions_index(sessions: &[SessionRecord]) -> HashMap<u64, String> {
-    let mut active_sessions = HashMap::new();
-    let now = now_ts();
-    for session in sessions
-        .iter()
-        .filter(|session| !session.revoked && session.refresh_expires_at > now)
-    {
-        active_sessions
-            .entry(session.user_id)
-            .and_modify(|current_session_id| {
-                let current = sessions
-                    .iter()
-                    .find(|candidate| candidate.session_id == *current_session_id)
-                    .map(|candidate| candidate.refresh_expires_at)
-                    .unwrap_or_default();
-                if session.refresh_expires_at >= current {
-                    *current_session_id = session.session_id.clone();
-                }
-            })
-            .or_insert_with(|| session.session_id.clone());
-    }
-    active_sessions
 }
 
 pub(super) fn seeded_dictionary_details() -> HashMap<u64, Vec<DictionaryDetailInfo>> {
@@ -748,10 +724,10 @@ pub(super) fn seeded_system_config(
     multipoint_enabled: bool,
 ) -> SystemConfigInfo {
     SystemConfigInfo {
-        bind_address: std::env::var("GAA_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8888".to_string()),
-        database_url: std::env::var("GAA_DATABASE_URL")
-            .unwrap_or_else(|_| "sqlite://gaa_auth.db".to_string()),
-        redis_url: std::env::var("GAA_REDIS_URL").unwrap_or_default(),
+        bind_address: std::env::var("POP_TAIL_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8888".to_string()),
+        database_url: std::env::var("POP_TAIL_DATABASE_URL")
+            .unwrap_or_else(|_| "sqlite://pop_tail_auth.db".to_string()),
+        redis_url: std::env::var("POP_TAIL_REDIS_URL").unwrap_or_default(),
         multipoint_enabled,
         compatibility_refresh_headers,
     }
@@ -810,12 +786,57 @@ pub(super) fn seeded_email_records() -> Vec<EmailRecord> {
     vec![EmailRecord {
         id: 1,
         to: "ops-team@gaa.local".to_string(),
-        subject: "GAA 邮件测试".to_string(),
+        subject: "PopTail 邮件测试".to_string(),
         body: "当前邮件由 Rust 重构版邮件工作台登记。".to_string(),
         mode: "test".to_string(),
         status: "测试已发送".to_string(),
         created_at: now_ts() * 1000,
     }]
+}
+
+pub(super) fn seeded_email_presets() -> Vec<crate::models::EmailPresetRecord> {
+    vec![
+        crate::models::EmailPresetRecord {
+            id: 1,
+            name: "运维巡检模板".to_string(),
+            description: "适合验证插件链路是否畅通，并提醒值班同学检查附件/链接。".to_string(),
+            to: "ops-team@gaa.local".to_string(),
+            subject: "PopTail 运维巡检提醒".to_string(),
+            body: [
+                "各位同学好，",
+                "",
+                "请在今日巡检窗口内完成以下核对：",
+                "1. 检查公告附件链接是否可访问；",
+                "2. 核对核心插件页面 smoke 是否通过；",
+                "3. 回填异常日志与处理结论。",
+                "",
+                "如链路异常，请在 30 分钟内同步到值班群。",
+            ]
+            .join("\n"),
+            created_at: now_ts() * 1000,
+            updated_at: now_ts() * 1000,
+        },
+        crate::models::EmailPresetRecord {
+            id: 2,
+            name: "发布窗口模板".to_string(),
+            description: "用于发布前确认邮件，默认指向发布值班地址。".to_string(),
+            to: "release-review@gaa.local".to_string(),
+            subject: "PopTail 发布窗口确认".to_string(),
+            body: [
+                "发布值班同学好，",
+                "",
+                "本次发布窗口请重点确认：",
+                "- 版本包、插件包是否齐备；",
+                "- 回滚联系人和时间窗是否明确；",
+                "- 邮件插件与公告附件手动链路是否已复核。",
+                "",
+                "确认完成后请回复 OK。",
+            ]
+            .join("\n"),
+            created_at: now_ts() * 1000,
+            updated_at: now_ts() * 1000,
+        },
+    ]
 }
 
 pub(super) fn seeded_announcements() -> Vec<AnnouncementRecord> {
@@ -1111,6 +1132,49 @@ pub(super) fn dedupe_u64(mut items: Vec<u64>) -> Vec<u64> {
     items
 }
 
+pub(super) fn normalize_menu_buttons(
+    menu_id: u64,
+    items: Vec<crate::models::MenuButtonInfo>,
+) -> Vec<crate::models::MenuButtonInfo> {
+    items
+        .into_iter()
+        .enumerate()
+        .map(|(index, item)| crate::models::MenuButtonInfo {
+            id: if item.id > 0 {
+                item.id
+            } else {
+                menu_id * 100 + index as u64 + 1
+            },
+            sys_base_menu_id: menu_id,
+            name: item.name.trim().to_string(),
+            desc: item.desc.trim().to_string(),
+        })
+        .filter(|item| !item.name.is_empty())
+        .collect()
+}
+
+pub(super) fn normalize_menu_parameters(
+    menu_id: u64,
+    items: Vec<crate::models::MenuParameterInfo>,
+) -> Vec<crate::models::MenuParameterInfo> {
+    items
+        .into_iter()
+        .enumerate()
+        .map(|(index, item)| crate::models::MenuParameterInfo {
+            id: if item.id > 0 {
+                item.id
+            } else {
+                menu_id * 1000 + index as u64 + 1
+            },
+            sys_base_menu_id: menu_id,
+            type_name: item.type_name.trim().to_string(),
+            key: item.key.trim().to_string(),
+            value: item.value.trim().to_string(),
+        })
+        .filter(|item| !item.key.is_empty())
+        .collect()
+}
+
 pub(super) fn sanitize_mcp_params(
     items: Vec<crate::models::McpToolParam>,
 ) -> Vec<crate::models::McpToolParam> {
@@ -1317,10 +1381,6 @@ pub(super) fn rebuild_dictionary_tree(
     }
 
     attach(None, 0, &mut by_parent)
-}
-
-pub(super) fn ttl_from(expiry_ts: i64) -> u64 {
-    expiry_ts.saturating_sub(now_ts()).max(1) as u64
 }
 
 pub(super) fn read_bool_env(key: &str, default: bool) -> bool {

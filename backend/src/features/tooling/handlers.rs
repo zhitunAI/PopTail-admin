@@ -174,6 +174,51 @@ pub async fn email_test(
     Ok(Json(ok(state.send_email(body, "test").await, "发送成功")))
 }
 
+pub async fn email_preset_list(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: axum::extract::Query<EmailPresetListRequest>,
+) -> Result<
+    Json<ApiResponse<crate::models::PageResult<crate::models::EmailPresetRecord>>>,
+    (StatusCode, Json<ApiResponse<serde_json::Value>>),
+> {
+    require_auth(&state, &headers).await?;
+    Ok(Json(ok(state.list_email_presets(query.0).await, "获取成功")))
+}
+
+pub async fn email_preset_save(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<EmailPresetUpsertRequest>,
+) -> Result<
+    Json<ApiResponse<crate::models::EmailPresetRecord>>,
+    (StatusCode, Json<ApiResponse<serde_json::Value>>),
+> {
+    require_auth(&state, &headers).await?;
+    Ok(Json(ok(state.upsert_email_preset(body).await, "保存成功")))
+}
+
+pub async fn email_preset_delete(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: axum::extract::Query<AnnouncementIdRequest>,
+) -> Result<
+    Json<ApiResponse<std::collections::HashMap<String, bool>>>,
+    (StatusCode, Json<ApiResponse<serde_json::Value>>),
+>
+{
+    require_auth(&state, &headers).await?;
+    let removed = state.delete_email_preset(query.id).await;
+    Ok(Json(ok(
+        {
+            let mut result = std::collections::HashMap::new();
+            result.insert("removed".to_string(), removed);
+            result
+        },
+        "删除成功",
+    )))
+}
+
 pub async fn email_list(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -287,4 +332,3 @@ pub async fn announcement_data_source(
     require_auth(&state, &headers).await?;
     Ok(Json(ok(state.announcement_data_source().await, "获取成功")))
 }
-

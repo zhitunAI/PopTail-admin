@@ -28,7 +28,7 @@ const defaultPreferences: Preferences = {
     layout: 'sidebar-nav',
     locale: 'zh-CN',
     loginExpiredMode: 'page',
-    name: 'Vben Admin',
+    name: 'PopTail-admin',
     preferencesButtonPosition: 'auto',
     watermark: false,
     watermarkContent: '',
@@ -43,7 +43,7 @@ const defaultPreferences: Preferences = {
   },
   copyright: {
     companyName: 'Vben',
-    companySiteLink: 'https://www.vben.pro',
+    companySiteLink: 'https://github.com/zhitunAI/PopTail-admin',
     date: '2024',
     enable: true,
     icp: '',

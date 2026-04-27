@@ -16,11 +16,11 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/gaa-auth /usr/local/bin/gaa-auth
+COPY --from=builder /app/target/release/pop-tail-auth /usr/local/bin/pop-tail-auth
 
 ENV RUST_LOG=info \
-    GAA_BIND_ADDR=0.0.0.0:8888
+    POP_TAIL_BIND_ADDR=0.0.0.0:8888
 
 EXPOSE 8888
 
-CMD ["gaa-auth"]
+CMD ["pop-tail-auth"]

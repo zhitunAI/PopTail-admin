@@ -11,9 +11,10 @@ import { defineStore } from 'pinia';
 
 import { $t } from '#/locales';
 import {
+  isAuthenticationPath,
   normalizeAuthRoutePath,
   useAuthStore as useGinAuthStore,
-} from '#/store/gin-ai-admin/auth';
+} from '#/store/pop-tail/auth';
 
 export const useAuthStore = defineStore('auth', () => {
   const ginAuthStore = useGinAuthStore();
@@ -66,6 +67,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout(redirect: boolean = true) {
     const currentPath = normalizeAuthRoutePath(router.currentRoute.value.fullPath);
+    const shouldPreserveRedirect =
+      redirect && currentPath !== LOGIN_PATH && !isAuthenticationPath(currentPath);
 
     await ginAuthStore.logout();
     resetAllStores();
@@ -73,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     await router.replace({
       path: LOGIN_PATH,
-      query: redirect && currentPath !== LOGIN_PATH
+      query: shouldPreserveRedirect
         ? {
             redirect: encodeURIComponent(currentPath),
           }

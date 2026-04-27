@@ -6,7 +6,7 @@ import { preferences } from '@vben/preferences';
 import { initStores } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antd';
-import './styles/gin-ai-admin.css';
+import './styles/pop-tail.css';
 
 import { useTitle } from '@vueuse/core';
 

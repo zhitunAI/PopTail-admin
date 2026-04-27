@@ -1,4 +1,3 @@
-use crate::models::SessionRecord;
 use argon2::Argon2;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
@@ -18,11 +17,11 @@ pub struct AuthConfig {
 impl Default for AuthConfig {
     fn default() -> Self {
         Self {
-            jwt_secret: std::env::var("GAA_JWT_SECRET")
-                .unwrap_or_else(|_| "gaa-dev-secret-change-me".to_string()),
-            access_ttl_sec: read_i64_env("GAA_ACCESS_TTL_SEC", 30 * 60),
-            refresh_ttl_sec: read_i64_env("GAA_REFRESH_TTL_SEC", 7 * 24 * 3600),
-            refresh_buffer_sec: read_i64_env("GAA_REFRESH_BUFFER_SEC", 5 * 60),
+            jwt_secret: std::env::var("POP_TAIL_JWT_SECRET")
+                .unwrap_or_else(|_| "pop-tail-dev-secret-change-me".to_string()),
+            access_ttl_sec: read_i64_env("POP_TAIL_ACCESS_TTL_SEC", 30 * 60),
+            refresh_ttl_sec: read_i64_env("POP_TAIL_REFRESH_TTL_SEC", 7 * 24 * 3600),
+            refresh_buffer_sec: read_i64_env("POP_TAIL_REFRESH_BUFFER_SEC", 5 * 60),
         }
     }
 }
@@ -35,13 +34,13 @@ impl AuthConfig {
 
         let secret = self.jwt_secret.trim();
         let insecure_defaults = [
-            "gaa-dev-secret-change-me",
-            "gaa-docker-secret-change-me",
-            "vue-rust-admin-dev-secret",
+            "pop-tail-dev-secret-change-me",
+            "pop-tail-docker-secret-change-me",
+            "pop-tail-admin-dev-secret",
         ];
         if secret.len() < 32 || insecure_defaults.iter().any(|value| value == &secret) {
             return Err(
-                "GAA_JWT_SECRET must be set to a production-grade secret of at least 32 characters"
+                "POP_TAIL_JWT_SECRET must be set to a production-grade secret of at least 32 characters"
                     .to_string(),
             );
         }
@@ -53,9 +52,9 @@ impl AuthConfig {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: u64,
-    pub sid: String,
     pub jti: String,
     pub aid: u32,
+    pub ver: u64,
     pub kind: String,
     pub exp: i64,
     pub iat: i64,
@@ -75,16 +74,16 @@ pub fn create_access_token(
     cfg: &AuthConfig,
     user_id: u64,
     authority_id: u32,
-    sid: &str,
-) -> Result<(String, String, i64), String> {
+    token_version: u64,
+) -> Result<(String, i64), String> {
     let iat = now_ts();
     let exp = iat + cfg.access_ttl_sec;
     let jti = new_id();
     let claims = Claims {
         sub: user_id,
-        sid: sid.to_string(),
         jti: jti.clone(),
         aid: authority_id,
+        ver: token_version,
         kind: "human_access".to_string(),
         exp,
         iat,
@@ -95,23 +94,23 @@ pub fn create_access_token(
         &EncodingKey::from_secret(cfg.jwt_secret.as_bytes()),
     )
     .map_err(|err| err.to_string())?;
-    Ok((token, jti, exp))
+    Ok((token, exp))
 }
 
 pub fn create_refresh_token(
     cfg: &AuthConfig,
     user_id: u64,
     authority_id: u32,
-    sid: &str,
-) -> Result<(String, String, i64), String> {
+    token_version: u64,
+) -> Result<(String, i64), String> {
     let iat = now_ts();
     let exp = iat + cfg.refresh_ttl_sec;
     let jti = new_id();
     let claims = Claims {
         sub: user_id,
-        sid: sid.to_string(),
         jti: jti.clone(),
         aid: authority_id,
+        ver: token_version,
         kind: "human_refresh".to_string(),
         exp,
         iat,
@@ -122,7 +121,7 @@ pub fn create_refresh_token(
         &EncodingKey::from_secret(cfg.jwt_secret.as_bytes()),
     )
     .map_err(|err| err.to_string())?;
-    Ok((token, jti, exp))
+    Ok((token, exp))
 }
 
 pub fn decode_token(cfg: &AuthConfig, token: &str) -> Result<Claims, String> {
@@ -136,8 +135,8 @@ pub fn decode_token(cfg: &AuthConfig, token: &str) -> Result<Claims, String> {
     .map_err(|err| err.to_string())
 }
 
-pub fn needs_rolling_refresh(cfg: &AuthConfig, session: &SessionRecord) -> bool {
-    (session.expires_at - now_ts()) <= cfg.refresh_buffer_sec
+pub fn needs_rolling_refresh(cfg: &AuthConfig, expires_at: i64) -> bool {
+    (expires_at - now_ts()) <= cfg.refresh_buffer_sec
 }
 
 pub fn hash_password(password: &str) -> Result<String, String> {
@@ -209,7 +208,7 @@ fn read_i64_env(key: &str, default: i64) -> i64 {
 }
 
 fn is_production_env() -> bool {
-    std::env::var("GAA_ENV")
+    std::env::var("POP_TAIL_ENV")
         .or_else(|_| std::env::var("RUST_ENV"))
         .or_else(|_| std::env::var("APP_ENV"))
         .map(|value| matches!(value.to_ascii_lowercase().as_str(), "prod" | "production"))

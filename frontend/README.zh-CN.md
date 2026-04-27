@@ -1,26 +1,30 @@
 <div align="center">
-  <a href="https://github.com/anncwb/vue-vben-admin">
+  <a href="https://github.com/zhitunAI/PopTail-admin">
     <img alt="VbenAdmin Logo" width="215" src="https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp">
   </a>
   <br>
   <br>
 
-[![license](https://img.shields.io/github/license/anncwb/vue-vben-admin.svg)](LICENSE)
+[![license](https://img.shields.io/github/license/zhitunAI/PopTail-admin.svg)](LICENSE)
 
-  <h1>Vue Vben Admin</h1>
+  <h1>PopTail-admin</h1>
 </div>
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vbenjs_vue-vben-admin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vbenjs_vue-vben-admin) ![codeql](https://github.com/vbenjs/vue-vben-admin/actions/workflows/codeql.yml/badge.svg) ![build](https://github.com/vbenjs/vue-vben-admin/actions/workflows/build.yml/badge.svg) ![ci](https://github.com/vbenjs/vue-vben-admin/actions/workflows/ci.yml/badge.svg) ![deploy](https://github.com/vbenjs/vue-vben-admin/actions/workflows/deploy.yml/badge.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zhitunAI_PopTail-admin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=zhitunAI_PopTail-admin) ![codeql](https://github.com/zhitunAI/PopTail-admin/actions/workflows/codeql.yml/badge.svg) ![build](https://github.com/zhitunAI/PopTail-admin/actions/workflows/build.yml/badge.svg) ![ci](https://github.com/zhitunAI/PopTail-admin/actions/workflows/ci.yml/badge.svg) ![deploy](https://github.com/zhitunAI/PopTail-admin/actions/workflows/deploy.yml/badge.svg)
 
 **中文** | [English](./README.md) | [日本語](./README.ja-JP.md)
 
 ## 简介
 
-Vue Vben Admin 是 Vue Vben Admin 的升级版本。作为一个免费开源的中后台模板，它采用了最新的 Vue 3、Vite、TypeScript 等主流技术开发，开箱即用，可用于中后台前端开发，也适合学习参考。
+PopTail-admin 是 PopTail-admin 的升级版本。作为一个免费开源的中后台模板，它采用了最新的 Vue 3、Vite、TypeScript 等主流技术开发，开箱即用，可用于中后台前端开发，也适合学习参考。
+
+本项目基于 `vue-vben-admin` 框架：
+
+- [https://github.com/vbenjs/vue-vben-admin](https://github.com/vbenjs/vue-vben-admin)
 
 ## 升级提示
 
-该版本为最新版本 `5.0`，与其他版本不兼容，如果你是新项目，建议使用最新版本。如果你想查看旧版本，请使用 [v2 分支](https://github.com/vbenjs/vue-vben-admin/tree/v2)
+当前版本为基于最新 `vue-vben-admin` 框架线的 PopTail-admin 实现。
 
 ## 特性
 
@@ -32,7 +36,7 @@ Vue Vben Admin 是 Vue Vben Admin 的升级版本。作为一个免费开源的�
 
 ## 预览
 
-- [Vben Admin](https://vben.pro/) - 完整版中文站点
+- [PopTail-admin 仓库](https://github.com/zhitunAI/PopTail-admin)
 
 测试账号：vben/123456
 
@@ -46,24 +50,24 @@ Vue Vben Admin 是 Vue Vben Admin 的升级版本。作为一个免费开源的�
 
 在 Gitpod（适用于 GitHub 的免费在线开发环境）中打开项目，并立即开始编码。
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/vbenjs/vue-vben-admin)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/zhitunAI/PopTail-admin)
 
 ## 文档
 
-[文档地址](https://doc.vben.pro/)
+[项目仓库地址](https://github.com/zhitunAI/PopTail-admin)
 
 ## 安装使用
 
 1. 获取项目代码
 
 ```bash
-git clone https://github.com/vbenjs/vue-vben-admin.git
+git clone https://github.com/zhitunAI/PopTail-admin.git
 ```
 
 2. 安装依赖
 
 ```bash
-cd vue-vben-admin
+cd PopTail-admin/frontend
 npm i -g corepack
 pnpm install
 ```
@@ -82,11 +86,11 @@ pnpm build
 
 ## 更新日志
 
-[CHANGELOG](https://github.com/vbenjs/vue-vben-admin/releases)
+[CHANGELOG](https://github.com/zhitunAI/PopTail-admin/releases)
 
 ## 如何贡献
 
-非常欢迎你的加入！[提一个 Issue](https://github.com/anncwb/vue-vben-admin/issues/new/choose) 或者提交一个 Pull Request。
+非常欢迎你的加入！[提一个 Issue](https://github.com/zhitunAI/PopTail-admin/issues/new/choose) 或者提交一个 Pull Request。
 
 **Pull Request 流程：**
 
@@ -124,7 +128,7 @@ pnpm build
 
 ## 维护者
 
-[@Vben](https://github.com/anncwb)
+[@zhitunAI](https://github.com/zhitunAI)
 
 ## Star 历史
 
@@ -144,13 +148,13 @@ pnpm build
   <img src="https://openomy.app/svg?repo=vbenjs/vue-vben-admin&chart=bubble&latestMonth=3" target="_blank" alt="Contribution Leaderboard" style="display: block; width: 100%;" />
  </a>
 
-<a href="https://github.com/vbenjs/vue-vben-admin/graphs/contributors">
+<a href="https://github.com/zhitunAI/PopTail-admin/graphs/contributors">
   <img alt="Contributors" src="https://contrib.rocks/image?repo=vbenjs/vue-vben-admin" />
 </a>
 
 ## Discord
 
-- [Github Discussions](https://github.com/anncwb/vue-vben-admin/discussions)
+- [GitHub Discussions](https://github.com/zhitunAI/PopTail-admin/discussions)
 
 ## 许可证
 

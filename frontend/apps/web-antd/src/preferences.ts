@@ -10,6 +10,28 @@ interface WebAntdPreferencesExtension {
   tenantMode: 'multi' | 'single';
 }
 
+const DEFAULT_LOGO_URL = '/brand/logo.svg';
+const SYSTEM_CONFIG_STORAGE_KEY = 'pop-tail-system-config-v1';
+
+function resolveInitialLogoUrl() {
+  if (typeof window === 'undefined') {
+    return DEFAULT_LOGO_URL;
+  }
+  try {
+    const raw = window.localStorage.getItem(SYSTEM_CONFIG_STORAGE_KEY);
+    if (!raw) {
+      return DEFAULT_LOGO_URL;
+    }
+    const parsed = JSON.parse(raw) as { system?: { logoUrl?: string } };
+    const logoUrl = parsed.system?.logoUrl?.trim();
+    return logoUrl || DEFAULT_LOGO_URL;
+  } catch {
+    return DEFAULT_LOGO_URL;
+  }
+}
+
+const initialLogoUrl = resolveInitialLogoUrl();
+
 export const overridesPreferences = defineOverridesPreferences({
   app: {
     accessMode: 'frontend',
@@ -19,7 +41,12 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
   },
   logo: {
-    source: 'https://api.iconify.design/lucide:layout-dashboard.svg?color=%231677ff',
+    source: initialLogoUrl,
+    sourceDark: initialLogoUrl,
+  },
+  transition: {
+    loading: false,
+    progress: false,
   },
 });
 

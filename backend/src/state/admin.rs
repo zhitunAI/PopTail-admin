@@ -1,7 +1,62 @@
 use super::seed::*;
 use super::*;
+use std::collections::HashSet;
 
 impl AppState {
+    fn apply_menu_upsert(
+        flat: &mut Vec<MenuInfo>,
+        input: crate::models::MenuUpsertRequest,
+    ) -> MenuInfo {
+        let node_id = input
+            .id
+            .unwrap_or_else(|| flat.iter().map(|item| item.id).max().unwrap_or(0) + 1);
+        let menu_btn = normalize_menu_buttons(node_id, input.menu_btn);
+        let parameters = normalize_menu_parameters(node_id, input.parameters);
+
+        if let Some(existing) = flat.iter_mut().find(|item| item.id == node_id) {
+            existing.parent_id = input.parent_id;
+            existing.name = input.name;
+            existing.path = input.path;
+            existing.component = input.component;
+            existing.sort = input.sort;
+            existing.hidden = input.hidden;
+            existing.meta = input.meta;
+            existing.menu_btn = menu_btn;
+            existing.parameters = parameters;
+        } else {
+            flat.push(MenuInfo {
+                id: node_id,
+                parent_id: input.parent_id,
+                name: input.name,
+                path: input.path,
+                component: input.component,
+                sort: input.sort,
+                hidden: input.hidden,
+                meta: input.meta,
+                menu_btn,
+                parameters,
+                children: vec![],
+            });
+        }
+
+        flat.iter().find(|item| item.id == node_id).cloned().unwrap_or(MenuInfo {
+            id: node_id,
+            parent_id: 0,
+            name: String::new(),
+            path: String::new(),
+            component: String::new(),
+            sort: 0,
+            hidden: false,
+            meta: MenuMeta {
+                title: String::new(),
+                icon: String::new(),
+            },
+            menu_btn: vec![],
+            parameters: vec![],
+            children: vec![],
+        })
+    }
+
     pub async fn list_users(&self, query: UserListRequest) -> PageResult<UserInfo> {
         let guard = self.inner.read().await;
         let mut items: Vec<UserInfo> = guard
@@ -122,10 +177,13 @@ impl AppState {
         authority_id: u32,
         menu_ids: Vec<u64>,
     ) -> Result<(), String> {
-        let mut guard = self.inner.write().await;
-        guard
-            .authority_menu_ids
-            .insert(authority_id, dedupe_u64(menu_ids));
+        {
+            let mut guard = self.inner.write().await;
+            guard
+                .authority_menu_ids
+                .insert(authority_id, dedupe_u64(menu_ids));
+        }
+        self.persist_menu_state().await;
         Ok(())
     }
 
@@ -138,16 +196,38 @@ impl AppState {
             .unwrap_or_default()
     }
 
+    pub async fn get_authority_buttons_batch(
+        &self,
+        authority_id: u32,
+        menu_ids: Vec<u64>,
+    ) -> Vec<(u64, Vec<u64>)> {
+        let guard = self.inner.read().await;
+        menu_ids
+            .into_iter()
+            .map(|menu_id| {
+                let selected = guard
+                    .authority_button_ids
+                    .get(&(authority_id, menu_id))
+                    .cloned()
+                    .unwrap_or_default();
+                (menu_id, selected)
+            })
+            .collect()
+    }
+
     pub async fn set_authority_buttons(
         &self,
         authority_id: u32,
         menu_id: u64,
         selected: Vec<u64>,
     ) -> Result<(), String> {
-        let mut guard = self.inner.write().await;
-        guard
-            .authority_button_ids
-            .insert((authority_id, menu_id), dedupe_u64(selected));
+        {
+            let mut guard = self.inner.write().await;
+            guard
+                .authority_button_ids
+                .insert((authority_id, menu_id), dedupe_u64(selected));
+        }
+        self.persist_menu_state().await;
         Ok(())
     }
 
@@ -179,23 +259,26 @@ impl AppState {
         authority_ids: Vec<u32>,
     ) -> Result<(), String> {
         let selected = authority_ids.into_iter().collect::<HashSet<_>>();
-        let mut guard = self.inner.write().await;
-        for (authority_id, menu_ids) in &mut guard.authority_menu_ids {
-            if selected.contains(authority_id) {
-                if !menu_ids.contains(&menu_id) {
-                    menu_ids.push(menu_id);
+        {
+            let mut guard = self.inner.write().await;
+            for (authority_id, menu_ids) in &mut guard.authority_menu_ids {
+                if selected.contains(authority_id) {
+                    if !menu_ids.contains(&menu_id) {
+                        menu_ids.push(menu_id);
+                    }
+                } else {
+                    menu_ids.retain(|id| *id != menu_id);
                 }
-            } else {
-                menu_ids.retain(|id| *id != menu_id);
+                *menu_ids = dedupe_u64(menu_ids.clone());
             }
-            *menu_ids = dedupe_u64(menu_ids.clone());
+            for authority_id in selected {
+                guard
+                    .authority_menu_ids
+                    .entry(authority_id)
+                    .or_insert_with(|| vec![menu_id]);
+            }
         }
-        for authority_id in selected {
-            guard
-                .authority_menu_ids
-                .entry(authority_id)
-                .or_insert_with(|| vec![menu_id]);
-        }
+        self.persist_menu_state().await;
         Ok(())
     }
 
@@ -273,14 +356,40 @@ impl AppState {
             record.info.nick_name = input.nick_name;
             record.info.phone = input.phone;
             record.info.email = input.email;
-            record.info.clone()
+            let mut password_changed = false;
+            if let Some(password) = input
+                .password
+                .as_ref()
+                .map(|item| item.trim())
+                .filter(|item| !item.is_empty())
+            {
+                record.password =
+                    hash_password(password).map_err(|err| format!("密码更新失败: {err}"))?;
+                record.token_version = record.token_version.saturating_add(1);
+                password_changed = true;
+            }
+            (
+                record.info.clone(),
+                record.password.clone(),
+                record.token_version,
+                password_changed,
+            )
         };
 
         if let Some(record) = guard.users_by_name.get_mut(&user_name) {
-            record.info = updated.clone();
+            record.info = updated.0.clone();
+            record.password = updated.1.clone();
+            record.token_version = updated.2;
+        }
+        drop(guard);
+
+        if updated.3 {
+            self.persistence
+                .upsert_user_auth_version(user_id, updated.2)
+                .await;
         }
 
-        Ok(updated)
+        Ok(updated.0)
     }
 
     pub async fn upsert_user(
@@ -347,6 +456,11 @@ impl AppState {
                 Ok(value) => hash_password(value.as_str()).expect("hash default user password"),
                 Err(err) => panic!("{err}"),
             });
+        let token_version = guard
+            .users_by_id
+            .get(&target_id)
+            .map(|record| record.token_version)
+            .unwrap_or(1);
 
         let info = UserInfo {
             id: target_id,
@@ -356,7 +470,7 @@ impl AppState {
             authority_id: input.authority_id,
             authority: selected_authority,
             authorities: switchable_authorities,
-            header_img: format!("https://example.com/gaa-user-{}.png", target_id),
+            header_img: format!("https://example.com/pop-tail-user-{}.png", target_id),
             phone: input.phone,
             email: input.email,
             enable: input.enable,
@@ -364,6 +478,7 @@ impl AppState {
         let record = UserRecord {
             info: info.clone(),
             password,
+            token_version,
         };
 
         guard
@@ -428,60 +543,99 @@ impl AppState {
     }
 
     pub async fn upsert_menu(&self, input: crate::models::MenuUpsertRequest) -> MenuInfo {
-        let mut guard = self.inner.write().await;
-        let mut flat = flatten_menus_for_state(&guard.menus);
-        let node_id = input
-            .id
-            .unwrap_or_else(|| flat.iter().map(|item| item.id).max().unwrap_or(0) + 1);
-
-        if let Some(existing) = flat.iter_mut().find(|item| item.id == node_id) {
-            existing.parent_id = input.parent_id;
-            existing.name = input.name;
-            existing.path = input.path;
-            existing.component = input.component;
-            existing.sort = input.sort;
-            existing.hidden = input.hidden;
-            existing.meta = input.meta;
-            existing.menu_btn = input.menu_btn;
-            existing.parameters = input.parameters;
-        } else {
-            flat.push(MenuInfo {
-                id: node_id,
-                parent_id: input.parent_id,
-                name: input.name,
-                path: input.path,
-                component: input.component,
-                sort: input.sort,
-                hidden: input.hidden,
-                meta: input.meta,
-                menu_btn: input.menu_btn,
-                parameters: input.parameters,
-                children: vec![],
-            });
-        }
-
-        let saved = flat
-            .iter()
-            .find(|item| item.id == node_id)
-            .cloned()
-            .unwrap_or(MenuInfo {
-                id: node_id,
-                parent_id: 0,
-                name: String::new(),
-                path: String::new(),
-                component: String::new(),
-                sort: 0,
-                hidden: false,
-                meta: MenuMeta {
-                    title: String::new(),
-                    icon: String::new(),
-                },
-                menu_btn: vec![],
-                parameters: vec![],
-                children: vec![],
-            });
-        guard.menus = rebuild_menu_tree(flat);
+        let saved = {
+            let mut guard = self.inner.write().await;
+            let mut flat = flatten_menus_for_state(&guard.menus);
+            let saved = Self::apply_menu_upsert(&mut flat, input);
+            guard.menus = rebuild_menu_tree(flat);
+            saved
+        };
+        self.persist_menu_state().await;
         saved
+    }
+
+    pub async fn upsert_menus(
+        &self,
+        inputs: Vec<crate::models::MenuUpsertRequest>,
+    ) -> Vec<MenuInfo> {
+        let saved_items = {
+            let mut guard = self.inner.write().await;
+            let mut flat = flatten_menus_for_state(&guard.menus);
+            let mut saved_items = Vec::with_capacity(inputs.len());
+
+            for input in inputs {
+                saved_items.push(Self::apply_menu_upsert(&mut flat, input));
+            }
+
+            guard.menus = rebuild_menu_tree(flat);
+            saved_items
+        };
+        self.persist_menu_state().await;
+        saved_items
+    }
+
+    pub async fn delete_menu(&self, menu_id: u64) -> Result<(), String> {
+        let deleted_ids = {
+            let mut guard = self.inner.write().await;
+            let flat = flatten_menus_for_state(&guard.menus);
+            let existing_ids = flat.iter().map(|item| item.id).collect::<HashSet<_>>();
+            if !existing_ids.contains(&menu_id) {
+                return Err("菜单不存在".to_string());
+            }
+
+            let mut delete_ids = HashSet::new();
+            let mut stack = vec![menu_id];
+            while let Some(current_id) = stack.pop() {
+                if !delete_ids.insert(current_id) {
+                    continue;
+                }
+                for child in flat.iter().filter(|item| item.parent_id == current_id) {
+                    stack.push(child.id);
+                }
+            }
+
+            let delete_ids_vec = delete_ids.iter().copied().collect::<Vec<_>>();
+            let deleted_names = flat
+                .iter()
+                .filter(|item| delete_ids.contains(&item.id))
+                .map(|item| item.name.clone())
+                .collect::<HashSet<_>>();
+
+            let next_flat = flat
+                .into_iter()
+                .filter(|item| !delete_ids.contains(&item.id))
+                .collect::<Vec<_>>();
+            guard.menus = rebuild_menu_tree(next_flat);
+
+            for menu_ids in guard.authority_menu_ids.values_mut() {
+                menu_ids.retain(|id| !delete_ids.contains(id));
+                *menu_ids = dedupe_u64(menu_ids.clone());
+            }
+
+            guard.authority_button_ids.retain(|(_, id), _| !delete_ids.contains(id));
+
+            let fallback_route = "dashboard".to_string();
+            fn repair_default_router(
+                items: &mut [AuthorityInfo],
+                deleted_names: &HashSet<String>,
+                fallback_route: &str,
+            ) {
+                for item in items {
+                    if deleted_names.contains(&item.default_router) {
+                        item.default_router = fallback_route.to_string();
+                    }
+                    repair_default_router(&mut item.children, deleted_names, fallback_route);
+                }
+            }
+            repair_default_router(&mut guard.authorities, &deleted_names, &fallback_route);
+
+            delete_ids_vec
+        };
+
+        if !deleted_ids.is_empty() {
+            self.persist_menu_state().await;
+        }
+        Ok(())
     }
 
     pub async fn upsert_api(&self, input: crate::models::ApiUpsertRequest) -> ApiInfo {

@@ -5,7 +5,7 @@ import { defineConfig } from 'vitepress';
 import { version } from '../../../package.json';
 
 export const en = defineConfig({
-  description: 'Vben Admin & Enterprise level management system framework',
+  description: 'PopTail-admin & Enterprise level management system framework',
   lang: 'en-US',
   themeConfig: {
     darkModeSwitchLabel: 'Theme',
@@ -16,7 +16,7 @@ export const en = defineConfig({
     },
     editLink: {
       pattern:
-        'https://github.com/vbenjs/vue-vben-admin/edit/main/docs/src/:path',
+        'https://github.com/zhitunAI/PopTail-admin/edit/main/docs/src/:path',
       text: 'Edit this page on GitHub',
     },
     footer: {
@@ -59,7 +59,7 @@ function sidebarGuide(): DefaultTheme.SidebarItem[] {
       items: [
         {
           link: 'introduction/vben',
-          text: 'About Vben Admin',
+          text: 'About PopTail-admin',
         },
         {
           link: 'introduction/why',
@@ -234,22 +234,22 @@ function nav(): DefaultTheme.NavItem[] {
       text: 'Demo',
       items: [
         {
-          text: 'Vben Admin',
+          text: 'PopTail-admin',
           items: [
             {
-              link: 'https://www.vben.pro',
+              link: 'https://github.com/zhitunAI/PopTail-admin',
               text: 'Demo Version',
             },
             {
-              link: 'https://ant.vben.pro',
+              link: 'https://github.com/zhitunAI/PopTail-admin',
               text: 'Ant Design Vue Version',
             },
             {
-              link: 'https://naive.vben.pro',
+              link: 'https://github.com/zhitunAI/PopTail-admin',
               text: 'Naive Version',
             },
             {
-              link: 'https://ele.vben.pro',
+              link: 'https://github.com/zhitunAI/PopTail-admin',
               text: 'Element Plus Version',
             },
           ],
@@ -259,7 +259,7 @@ function nav(): DefaultTheme.NavItem[] {
           items: [
             {
               link: 'https://vben.vvbin.cn',
-              text: 'Vben Admin 2.x',
+              text: 'PopTail-admin 2.x',
             },
           ],
         },
@@ -269,7 +269,7 @@ function nav(): DefaultTheme.NavItem[] {
       text: version,
       items: [
         {
-          link: 'https://github.com/vbenjs/vue-vben-admin/releases',
+          link: 'https://github.com/zhitunAI/PopTail-admin/releases',
           text: 'Changelog',
         },
         {
@@ -277,7 +277,7 @@ function nav(): DefaultTheme.NavItem[] {
           text: 'Roadmap',
         },
         {
-          link: 'https://github.com/vbenjs/vue-vben-admin/blob/main/.github/contributing.md',
+          link: 'https://github.com/zhitunAI/PopTail-admin/blob/main/.github/contributing.md',
           text: 'Contribution',
         },
       ],

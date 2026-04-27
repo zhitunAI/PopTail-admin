@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed, useSlots } from 'vue';
 
-import { useRefresh } from '@vben/hooks';
 import { RotateCw } from '@vben/icons';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore } from '@vben/stores';
@@ -34,11 +33,14 @@ withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{ clearPreferencesAndLogout: [] }>();
 
 const REFERENCE_VALUE = 50;
+const RELOAD_LOADING_ID = '__gaa-reload-loading__';
+const RELOAD_LOADING_STYLE_ID = '__gaa-reload-loading-style__';
 
 const accessStore = useAccessStore();
 const { globalSearchShortcutKey, preferencesButtonPosition } = usePreferences();
 const slots = useSlots();
-const { refresh } = useRefresh();
+const isDesktopShell =
+  typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__?.invoke;
 
 const rightSlots = computed(() => {
   const list = [{ index: REFERENCE_VALUE + 100, name: 'user-dropdown' }];
@@ -73,7 +75,7 @@ const rightSlots = computed(() => {
       name: 'timezone',
     });
   }
-  if (preferences.widget.fullscreen) {
+  if (preferences.widget.fullscreen && !isDesktopShell) {
     list.push({
       index: REFERENCE_VALUE + 50,
       name: 'fullscreen',
@@ -117,6 +119,143 @@ const leftSlots = computed(() => {
 function clearPreferencesAndLogout() {
   emit('clearPreferencesAndLogout');
 }
+
+function ensureReloadLoadingStyle() {
+  if (document.getElementById(RELOAD_LOADING_STYLE_ID)) {
+    return;
+  }
+
+  const style = document.createElement('style');
+  style.id = RELOAD_LOADING_STYLE_ID;
+  style.textContent = `
+    #${RELOAD_LOADING_ID} {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--background, #ffffff) 74%, transparent);
+      backdrop-filter: blur(10px);
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-logo-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--card, #ffffff) 88%, transparent);
+      box-shadow:
+        0 18px 50px color-mix(in srgb, var(--primary, #1677ff) 22%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, var(--primary, #1677ff) 16%, transparent);
+      overflow: hidden;
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-logo-wrap::before,
+    #${RELOAD_LOADING_ID} .gaa-reload-logo-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -20%;
+      border-radius: 30px;
+      border: 2px solid transparent;
+      opacity: 0.55;
+      animation: gaa-reload-ring 1.8s ease-in-out infinite;
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-logo-wrap::before {
+      border-top-color: color-mix(in srgb, var(--primary, #1677ff) 90%, white);
+      border-right-color: color-mix(in srgb, var(--primary, #1677ff) 45%, transparent);
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-logo-wrap::after {
+      inset: -32%;
+      animation-delay: 0.25s;
+      border-bottom-color: color-mix(in srgb, var(--primary, #1677ff) 78%, white);
+      border-left-color: color-mix(in srgb, var(--primary, #1677ff) 38%, transparent);
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      animation: gaa-reload-logo 1.15s ease-in-out infinite alternate;
+      filter: drop-shadow(0 10px 16px color-mix(in srgb, var(--primary, #1677ff) 30%, transparent));
+    }
+
+    #${RELOAD_LOADING_ID} .gaa-reload-text {
+      font-size: 13px;
+      color: color-mix(in srgb, var(--foreground, #111827) 72%, transparent);
+      letter-spacing: 0.08em;
+    }
+
+    @keyframes gaa-reload-ring {
+      0% {
+        transform: rotate(0deg) scale(0.94);
+        opacity: 0.2;
+      }
+      60% {
+        opacity: 0.72;
+      }
+      100% {
+        transform: rotate(360deg) scale(1.06);
+        opacity: 0.18;
+      }
+    }
+
+    @keyframes gaa-reload-logo {
+      0% {
+        transform: translateY(0) scale(0.96);
+      }
+      100% {
+        transform: translateY(-2px) scale(1.04);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function showReloadLoading() {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  ensureReloadLoadingStyle();
+
+  const existing = document.getElementById(RELOAD_LOADING_ID);
+  if (existing) {
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = RELOAD_LOADING_ID;
+  const logo = preferences.logo.sourceDark || preferences.logo.source;
+  overlay.innerHTML = `
+    <div class="gaa-reload-shell" aria-live="polite" aria-label="loading">
+      <div class="gaa-reload-logo-wrap">
+        <img class="gaa-reload-logo" src="${logo}" alt="logo loading" />
+      </div>
+      <div class="gaa-reload-text">加载中...</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function reloadApp() {
+  showReloadLoading();
+  window.setTimeout(() => {
+    window.location.reload();
+  }, 60);
+}
 </script>
 
 <template>
@@ -126,13 +265,13 @@ function clearPreferencesAndLogout() {
   >
     <slot :name="slot.name">
       <template v-if="slot.name === 'refresh'">
-        <VbenIconButton class="my-0 mr-1 rounded-md" @click="refresh">
+        <VbenIconButton class="my-0 mr-1 rounded-md" @click="reloadApp">
           <RotateCw class="size-4" />
         </VbenIconButton>
       </template>
     </slot>
   </template>
-  <div class="flex-center hidden lg:block">
+  <div class="flex min-w-0 items-center">
     <slot name="breadcrumb"></slot>
   </div>
   <template

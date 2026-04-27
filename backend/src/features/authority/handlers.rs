@@ -185,6 +185,34 @@ pub async fn menu_upsert(
     Ok(Json(ok(state.upsert_menu(body).await, "保存成功")))
 }
 
+pub async fn menu_upsert_batch(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<crate::models::MenuBatchUpsertRequest>,
+) -> Result<
+    Json<ApiResponse<Vec<crate::models::MenuInfo>>>,
+    (StatusCode, Json<ApiResponse<serde_json::Value>>),
+> {
+    require_auth(&state, &headers).await?;
+    Ok(Json(ok(state.upsert_menus(body.menus).await, "批量保存成功")))
+}
+
+pub async fn menu_delete(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<IdRequest>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
+{
+    require_auth(&state, &headers).await?;
+    state.delete_menu(body.id).await.map_err(|err| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(fail(serde_json::json!({}), &err)),
+        )
+    })?;
+    Ok(Json(ok(serde_json::json!({}), "删除成功")))
+}
+
 pub async fn menu_authority_get(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -277,6 +305,30 @@ pub async fn authority_btn_get(
     )))
 }
 
+pub async fn authority_btn_get_batch(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<crate::models::AuthorityButtonMatrixBatchRequest>,
+) -> Result<
+    Json<ApiResponse<Vec<crate::models::AuthorityButtonMatrixBatchSelectionItem>>>,
+    (StatusCode, Json<ApiResponse<serde_json::Value>>),
+> {
+    require_auth(&state, &headers).await?;
+    let mut menu_ids = body.menu_ids;
+    menu_ids.sort_unstable();
+    menu_ids.dedup();
+    let selected = state
+        .get_authority_buttons_batch(body.authority_id, menu_ids)
+        .await
+        .into_iter()
+        .map(|(menu_id, selected)| crate::models::AuthorityButtonMatrixBatchSelectionItem {
+            menu_id,
+            selected,
+        })
+        .collect::<Vec<_>>();
+    Ok(Json(ok(selected, "查询成功")))
+}
+
 pub async fn authority_btn_set(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -295,4 +347,3 @@ pub async fn authority_btn_set(
         })?;
     Ok(Json(ok(serde_json::json!({}), "分配成功")))
 }
-

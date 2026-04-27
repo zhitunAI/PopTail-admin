@@ -10,13 +10,13 @@ import { preferences } from '@vben/preferences';
 
 import { message } from 'ant-design-vue';
 
-import { apiClient } from '#/api/gin-ai-admin/client';
+import { apiClient } from '#/api/pop-tail/client';
 import { BasicLayout, IFrameView } from '#/layouts';
 import { $t } from '#/locales';
 import {
   normalizeAuthRoutePath,
   normalizeDefaultRouteName,
-} from '#/store/gin-ai-admin/auth';
+} from '#/store/pop-tail/auth';
 
 const forbiddenComponent = () => import('../views/_core/fallback/forbidden.vue');
 let hasWarnedAboutLegacyMenuFallback = false;

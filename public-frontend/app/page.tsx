@@ -138,7 +138,7 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    const publicApiBase = process.env.NEXT_PUBLIC_GAA_PUBLIC_API_BASE?.trim() || "";
+    const publicApiBase = process.env.NEXT_PUBLIC_POP_TAIL_PUBLIC_API_BASE?.trim() || "";
     const settingsUrl = `${publicApiBase.replace(/\/$/, "")}/public/frontend/settings`;
     fetch(settingsUrl, {
       credentials: "omit",

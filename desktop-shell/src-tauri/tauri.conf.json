@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GAA Desktop",
+  "version": "0.1.0",
+  "identifier": "com.gaa.desktop",
+  "build": {
+    "beforeDevCommand": "cd ../../frontend/apps/web-antd && pnpm dev --host 127.0.0.1 --port 5666",
+    "beforeBuildCommand": "cd ../../frontend/apps/web-antd && pnpm build",
+    "devUrl": "http://127.0.0.1:5666",
+    "frontendDist": "../../frontend/apps/web-antd/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "GAA Desktop",
+        "width": 1440,
+        "height": 960,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ]
+  }
+}

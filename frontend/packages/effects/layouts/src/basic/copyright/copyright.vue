@@ -12,7 +12,7 @@ defineOptions({
 });
 
 withDefaults(defineProps<Props>(), {
-  companyName: 'Vben Admin',
+  companyName: 'PopTail-admin',
   companySiteLink: '',
   date: '2024',
   icp: '',

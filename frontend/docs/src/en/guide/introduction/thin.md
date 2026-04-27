@@ -7,7 +7,6 @@ Starting from version `5.0`, we no longer provide slimmed-down repositories or b
 First, identify the version of the `UI` component library you need, and then delete the corresponding applications. For example, if you choose to use `Ant Design Vue`, you can delete the other applications. Simply remove the following two folders:
 
 ```bash
-apps/web-ele
 apps/web-native
 
 ```
@@ -20,7 +19,6 @@ If your project doesn’t include the `UI` component library you need, you can d
 
 ## Demo Code Slimming
 
-If you don’t need demo code, you can simply delete the `playground` folder
 
 ## Documentation Slimming
 
@@ -28,7 +26,7 @@ If you don’t need documentation, you can delete the `docs` folder.
 
 ## Remove Mock Service
 
-If you don’t need the `Mock` service, you can delete the `apps/backend-mock` folder. Also, remove the `VITE_NITRO_MOCK` variable from the `.env.development` file in your application.
+If you don’t need the `Mock` service, you can delete the `mock 服务` folder. Also, remove the `VITE_NITRO_MOCK` variable from the `.env.development` file in your application.
 
 ```bash
 # Whether to enable Nitro Mock service, true to enable, false to disable
@@ -53,16 +51,9 @@ After slimming down, you may need to adjust commands according to your project. 
 {
   "scripts": {
     "build:antd": "pnpm run build --filter=@vben/web-antd",
-    "build:docs": "pnpm run build --filter=@vben/docs",
-    "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:naive": "pnpm run build --filter=@vben/web-naive",
-    "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
-    "build:play": "pnpm run build --filter=@vben/playground",
+    "build:docs": "pnpm run build --filter=@pop-tail/docs",
     "dev:antd": "pnpm -F @vben/web-antd run dev",
-    "dev:docs": "pnpm -F @vben/docs run dev",
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    "dev:play": "pnpm -F @vben/playground run dev",
-    "dev:naive": "pnpm -F @vben/web-naive run dev"
+    "dev:docs": "pnpm -F @pop-tail/docs run dev",
   }
 }
 ```

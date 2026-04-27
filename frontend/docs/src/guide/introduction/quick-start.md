@@ -32,7 +32,7 @@ git -v
 
 ```sh [GitHub]
 # clone 代码
-git clone https://github.com/vbenjs/vue-vben-admin.git
+git clone https://github.com/zhitunAI/PopTail-admin.git
 ```
 
 ```sh [Gitee]
@@ -89,11 +89,7 @@ pnpm dev
 │
 ◆  Select the app you need to run [dev]:
 │  ● @vben/web-antd
-│  ○ @vben/web-antdv-next
-│  ○ @vben/web-ele
-│  ○ @vben/web-naive
-│  ○ @vben/docs
-│  ● @vben/playground
+│  ○ @pop-tail/docs
 └
 ```
 
@@ -108,5 +104,4 @@ pnpm run dev:antd
 pnpm run dev:ele
 pnpm run dev:naive
 pnpm run dev:docs
-pnpm run dev:play
 ```

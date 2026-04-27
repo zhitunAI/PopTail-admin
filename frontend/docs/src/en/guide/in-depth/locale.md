@@ -64,7 +64,7 @@ To add new translation texts, simply find `src/locales/langs/` in the correspond
 ```json
 {
   "about": {
-    "desc": "Vben Admin 是一个现代的管理模版。"
+    "desc": "PopTail-admin 是一个现代的管理模版。"
   }
 }
 ````
@@ -75,7 +75,7 @@ To add new translation texts, simply find `src/locales/langs/` in the correspond
 ```json
 {
   "about": {
-    "desc": "Vben Admin is a modern management template."
+    "desc": "PopTail-admin is a modern management template."
   }
 }
 ````

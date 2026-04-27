@@ -58,11 +58,12 @@ pub async fn refresh(
     }
 
     match state.refresh(&refresh_token).await {
-        Ok((token, exp)) => {
+        Ok((token, exp, next_refresh_token)) => {
             let payload = ok(
                 serde_json::json!({
                     "token": token,
-                    "expiresAt": exp * 1000
+                    "expiresAt": exp * 1000,
+                    "refreshToken": next_refresh_token
                 }),
                 "刷新成功",
             );
@@ -71,6 +72,11 @@ pub async fn refresh(
                 response.headers_mut(),
                 &token,
                 state.config.auth.access_ttl_sec,
+            );
+            append_refresh_cookie(
+                response.headers_mut(),
+                &next_refresh_token,
+                state.config.auth.refresh_ttl_sec,
             );
             Ok(response)
         }
@@ -95,7 +101,7 @@ pub async fn logout(
             )
         })?;
 
-        state.revoke_session(&auth.session_id).await;
+        state.revoke_user_tokens(auth.user.id).await;
     }
     let mut response = Json(ok(serde_json::json!({}), "登出成功")).into_response();
     append_clear_auth_cookies(response.headers_mut());
@@ -150,3 +156,67 @@ pub async fn user_info(
     Ok(response)
 }
 
+pub async fn bootstrap_payload(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, (StatusCode, Json<ApiResponse<serde_json::Value>>)> {
+    let token = resolve_access_token(&headers).ok_or((
+        StatusCode::UNAUTHORIZED,
+        Json(fail(serde_json::json!({}), "未登录或非法访问，请登录")),
+    ))?;
+
+    let auth = state.authenticate_human(&token).await.map_err(|err| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(fail(serde_json::json!({}), &err)),
+        )
+    })?;
+
+    let policy_paths = state.get_policy_paths(auth.user.authority_id).await;
+    let menus = state.list_menu_tree().await;
+    let button_menu_ids = crate::core::http::flatten_menus(&menus)
+        .into_iter()
+        .filter(|item| !item.path.is_empty() && !item.menu_btn.is_empty())
+        .map(|item| item.id)
+        .collect::<Vec<_>>();
+    let authority_buttons = state
+        .get_authority_buttons_batch(auth.user.authority_id, button_menu_ids)
+        .await
+        .into_iter()
+        .map(|(menu_id, selected)| AuthorityButtonMatrixBatchSelectionItem { menu_id, selected })
+        .collect::<Vec<_>>();
+
+    let payload = ok(
+        BootstrapPayload {
+            user_info: auth.user,
+            policy_paths,
+            menus,
+            authority_buttons,
+        },
+        "获取成功",
+    );
+
+    let mut response = Json(payload).into_response();
+    if state.config.compatibility_refresh_headers {
+        if let Some(token) = auth.new_token {
+            response.headers_mut().insert(
+                "new-token",
+                HeaderValue::from_str(&token).unwrap_or_else(|_| HeaderValue::from_static("")),
+            );
+            append_access_cookie(
+                response.headers_mut(),
+                &token,
+                state.config.auth.access_ttl_sec,
+            );
+        }
+        if let Some(exp) = auth.new_expires_at {
+            response.headers_mut().insert(
+                "new-expires-at",
+                HeaderValue::from_str(&exp.to_string())
+                    .unwrap_or_else(|_| HeaderValue::from_static("0")),
+            );
+        }
+    }
+
+    Ok(response)
+}

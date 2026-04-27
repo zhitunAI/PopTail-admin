@@ -1,26 +1,30 @@
 <div align="center">
-  <a href="https://github.com/anncwb/vue-vben-admin">
+  <a href="https://github.com/zhitunAI/PopTail-admin">
     <img alt="VbenAdmin Logo" width="215" src="https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp">
   </a>
   <br>
   <br>
 
-[![license](https://img.shields.io/github/license/anncwb/vue-vben-admin.svg)](LICENSE)
+[![license](https://img.shields.io/github/license/zhitunAI/PopTail-admin.svg)](LICENSE)
 
-  <h1>Vue Vben Admin</h1>
+  <h1>PopTail-admin</h1>
 </div>
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vbenjs_vue-vben-admin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vbenjs_vue-vben-admin) [![codeql](https://github.com/vbenjs/vue-vben-admin/actions/workflows/codeql.yml/badge.svg)](https://github.com/vbenjs/vue-vben-admin/actions/workflows/codeql.yml) [![build](https://github.com/vbenjs/vue-vben-admin/actions/workflows/build.yml/badge.svg)](https://github.com/vbenjs/vue-vben-admin/actions/workflows/build.yml) [![ci](https://github.com/vbenjs/vue-vben-admin/actions/workflows/ci.yml/badge.svg)](https://github.com/vbenjs/vue-vben-admin/actions/workflows/ci.yml) [![deploy](https://github.com/vbenjs/vue-vben-admin/actions/workflows/deploy.yml/badge.svg)](https://github.com/vbenjs/vue-vben-admin/actions/workflows/deploy.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zhitunAI_PopTail-admin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=zhitunAI_PopTail-admin) [![codeql](https://github.com/zhitunAI/PopTail-admin/actions/workflows/codeql.yml/badge.svg)](https://github.com/zhitunAI/PopTail-admin/actions/workflows/codeql.yml) [![build](https://github.com/zhitunAI/PopTail-admin/actions/workflows/build.yml/badge.svg)](https://github.com/zhitunAI/PopTail-admin/actions/workflows/build.yml) [![ci](https://github.com/zhitunAI/PopTail-admin/actions/workflows/ci.yml/badge.svg)](https://github.com/zhitunAI/PopTail-admin/actions/workflows/ci.yml) [![deploy](https://github.com/zhitunAI/PopTail-admin/actions/workflows/deploy.yml/badge.svg)](https://github.com/zhitunAI/PopTail-admin/actions/workflows/deploy.yml)
 
 **English** | [中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
 ## Introduction
 
-Vue Vben Admin is a free and open source middle and back-end template. Using the latest `vue3`, `vite`, `TypeScript` and other mainstream technology development, the out-of-the-box middle and back-end front-end solutions can also be used for learning reference.
+PopTail-admin is a free and open source middle and back-end template. Using the latest `vue3`, `vite`, `TypeScript` and other mainstream technology development, the out-of-the-box middle and back-end front-end solutions can also be used for learning reference.
+
+This project is based on the `vue-vben-admin` framework:
+
+- [https://github.com/vbenjs/vue-vben-admin](https://github.com/vbenjs/vue-vben-admin)
 
 ## Upgrade Notice
 
-This is the latest version, 5.0, and it is not compatible with previous versions. If you are starting a new project, it is recommended to use the latest version. If you wish to view the old version, please use the [v2 branch](https://github.com/vbenjs/vue-vben-admin/tree/v2).
+This is the current PopTail-admin version based on the latest `vue-vben-admin` framework line.
 
 ## Features
 
@@ -32,7 +36,7 @@ This is the latest version, 5.0, and it is not compatible with previous versions
 
 ## Preview
 
-- [Vben Admin](https://vben.pro/) - Full version Chinese site
+- [PopTail-admin Repository](https://github.com/zhitunAI/PopTail-admin)
 
 Test Account: vben/123456
 
@@ -46,24 +50,24 @@ Test Account: vben/123456
 
 Open the project in Gitpod (free online dev environment for GitHub) and start coding immediately.
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/vbenjs/vue-vben-admin)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/zhitunAI/PopTail-admin)
 
 ## Documentation
 
-[Document](https://doc.vben.pro/)
+[Project Repository](https://github.com/zhitunAI/PopTail-admin)
 
 ## Install and Use
 
 1. Get the project code
 
 ```bash
-git clone https://github.com/vbenjs/vue-vben-admin.git
+git clone https://github.com/zhitunAI/PopTail-admin.git
 ```
 
 2. Install dependencies
 
 ```bash
-cd vue-vben-admin
+cd PopTail-admin/frontend
 npm i -g corepack
 pnpm install
 ```
@@ -82,11 +86,11 @@ pnpm build
 
 ## Change Log
 
-[CHANGELOG](https://github.com/vbenjs/vue-vben-admin/releases)
+[CHANGELOG](https://github.com/zhitunAI/PopTail-admin/releases)
 
 ## How to Contribute
 
-You are very welcome to join! [Raise an issue](https://github.com/anncwb/vue-vben-admin/issues/new/choose) or submit a Pull Request.
+You are very welcome to join! [Raise an issue](https://github.com/zhitunAI/PopTail-admin/issues/new/choose) or submit a Pull Request.
 
 **Pull Request Process:**
 
@@ -124,7 +128,7 @@ Support modern browsers, not IE
 
 ## Maintainer
 
-[@Vben](https://github.com/anncwb)
+[@zhitunAI](https://github.com/zhitunAI)
 
 ## Star History
 
@@ -144,13 +148,13 @@ If you think this project is helpful to you, you can help the author buy a cup o
   <img src="https://openomy.app/svg?repo=vbenjs/vue-vben-admin&chart=bubble&latestMonth=3" target="_blank" alt="Contribution Leaderboard" style="display: block; width: 100%;" />
  </a>
 
-<a href="https://github.com/vbenjs/vue-vben-admin/graphs/contributors">
+<a href="https://github.com/zhitunAI/PopTail-admin/graphs/contributors">
   <img alt="Contributors" src="https://contrib.rocks/image?repo=vbenjs/vue-vben-admin" />
 </a>
 
 ## Discord
 
-- [Github Discussions](https://github.com/anncwb/vue-vben-admin/discussions)
+- [GitHub Discussions](https://github.com/zhitunAI/PopTail-admin/discussions)
 
 ## License
 

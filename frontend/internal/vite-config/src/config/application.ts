@@ -44,7 +44,7 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
       nitroMockOptions: {},
       print: !isBuild,
       printInfoMap: {
-        'Vben Admin Docs': 'https://doc.vben.pro',
+        'PopTail-admin Docs': 'https://github.com/zhitunAI/PopTail-admin',
       },
       pwa: true,
       pwaOptions: getDefaultPwaOptions(appTitle),

@@ -1,5 +1,6 @@
 use super::seed::*;
 use super::*;
+use std::collections::HashSet;
 
 impl AppState {
     pub async fn list_api_tokens(&self) -> PageResult<ApiTokenRecord> {
@@ -201,6 +202,84 @@ impl AppState {
     pub async fn list_email_records(&self) -> PageResult<EmailRecord> {
         let guard = self.inner.read().await;
         page_result(guard.email_records.clone(), Some(1), Some(20))
+    }
+
+    pub async fn list_email_presets(
+        &self,
+        input: crate::models::EmailPresetListRequest,
+    ) -> PageResult<crate::models::EmailPresetRecord> {
+        let guard = self.inner.read().await;
+        let keyword = input.name.unwrap_or_default().trim().to_lowercase();
+        let rows = guard
+            .email_presets
+            .iter()
+            .filter(|item| {
+                keyword.is_empty()
+                    || item.name.to_lowercase().contains(&keyword)
+                    || item.subject.to_lowercase().contains(&keyword)
+                    || item.description.to_lowercase().contains(&keyword)
+            })
+            .cloned()
+            .collect();
+        page_result(rows, input.page, input.page_size)
+    }
+
+    pub async fn upsert_email_preset(
+        &self,
+        input: crate::models::EmailPresetUpsertRequest,
+    ) -> crate::models::EmailPresetRecord {
+        let mut guard = self.inner.write().await;
+        let now = now_ts() * 1000;
+        if let Some(existing) = guard
+            .email_presets
+            .iter_mut()
+            .find(|item| item.id == input.id.unwrap_or(0))
+        {
+            existing.name = input.name.trim().to_string();
+            existing.description = input.description.unwrap_or_default().trim().to_string();
+            existing.to = input.to.trim().to_string();
+            existing.subject = input.subject.trim().to_string();
+            existing.body = input.body.trim().to_string();
+            existing.updated_at = now;
+            let saved = existing.clone();
+            drop(guard);
+            self.persistence.upsert_email_preset(&saved).await;
+            return saved;
+        }
+
+        let next_id = guard
+            .email_presets
+            .iter()
+            .map(|item| item.id)
+            .max()
+            .unwrap_or(0)
+            + 1;
+        let record = crate::models::EmailPresetRecord {
+            id: next_id,
+            name: input.name.trim().to_string(),
+            description: input.description.unwrap_or_default().trim().to_string(),
+            to: input.to.trim().to_string(),
+            subject: input.subject.trim().to_string(),
+            body: input.body.trim().to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        guard.email_presets.insert(0, record.clone());
+        drop(guard);
+        self.persistence.upsert_email_preset(&record).await;
+        record
+    }
+
+    pub async fn delete_email_preset(&self, id: u64) -> bool {
+        let mut guard = self.inner.write().await;
+        let before = guard.email_presets.len();
+        guard.email_presets.retain(|item| item.id != id);
+        let removed = before != guard.email_presets.len();
+        drop(guard);
+        if removed {
+            self.persistence.delete_email_preset(id).await;
+        }
+        removed
     }
 
     pub async fn send_email(

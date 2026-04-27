@@ -3,7 +3,6 @@ pub mod casbin_port;
 pub mod core;
 pub mod features;
 pub mod models;
-pub mod session_registry;
 pub mod state;
 pub mod storage;
 

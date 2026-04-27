@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Verdant Agent Studio",
-  description: "AI-native public homepage and member console for vue-rust-admin.",
+  description: "AI-native public homepage and member console for PopTail-admin.",
 };
 
 export default function RootLayout({

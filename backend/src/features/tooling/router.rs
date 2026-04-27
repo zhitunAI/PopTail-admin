@@ -7,7 +7,7 @@ use super::{
     announcement_create, announcement_data_source, announcement_delete, announcement_delete_many,
     announcement_get, announcement_list, announcement_update, api_token_clear, api_token_issue,
     api_token_list, auto_code_registry_append, auto_code_registry_clear, auto_code_registry_list,
-    email_list, email_send, email_test, global_constraint_get, global_constraint_save,
+    email_list, email_preset_delete, email_preset_list, email_preset_save, email_send, email_test, global_constraint_get, global_constraint_save,
     mcp_service_start, mcp_service_status, mcp_service_stop, mcp_tool_list, mcp_tool_test,
     mcp_tool_upsert, package_list, package_upsert, plugin_install_create, plugin_install_list,
     plugin_manifest_list, plugin_manifest_upsert, release_append, release_list, skill_delete,
@@ -34,6 +34,9 @@ pub fn router() -> Router<AppState> {
         .route("/tool/release/list", get(release_list))
         .route("/tool/release/save", post(release_append))
         .route("/email/getEmailList", get(email_list))
+        .route("/email/getEmailPresetList", get(email_preset_list))
+        .route("/email/saveEmailPreset", post(email_preset_save))
+        .route("/email/deleteEmailPreset", axum::routing::delete(email_preset_delete))
         .route("/email/emailTest", post(email_test))
         .route("/email/sendEmail", post(email_send))
         .route("/info/getInfoDataSource", get(announcement_data_source))

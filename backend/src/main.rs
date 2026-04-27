@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use gaa_auth::{build_router, state::AppState};
+use pop_tail_auth::{build_router, state::AppState};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -14,9 +14,9 @@ async fn main() {
         .expect("failed to seed application state");
     let app = build_router(state);
 
-    let bind_addr = std::env::var("GAA_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8888".to_string());
+    let bind_addr = std::env::var("POP_TAIL_BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8888".to_string());
     let addr: SocketAddr = bind_addr.parse().expect("invalid bind address");
-    tracing::info!("GAA auth server listening on {}", addr);
+    tracing::info!("PopTail auth server listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await

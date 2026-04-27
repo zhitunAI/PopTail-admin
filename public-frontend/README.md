@@ -1,6 +1,10 @@
 # Public Frontend
 
-Next + Tailwind CSS public-facing site for `vue-rust-admin`.
+Next + Tailwind CSS public-facing site for `PopTail-admin`.
+
+This site is part of a project built on top of the `vue-vben-admin` framework:
+
+- [https://github.com/vbenjs/vue-vben-admin](https://github.com/vbenjs/vue-vben-admin)
 
 The home page now follows a Jimeng-style AI creation workspace: left rail,
 centered Agent headline, large prompt panel, tool cards, inspiration tabs and a

@@ -3,4 +3,15 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-docker compose -f "$ROOT_DIR/docker-compose.yml" up -d backend
+export POP_TAIL_POSTGRES_PASSWORD="${POP_TAIL_POSTGRES_PASSWORD:-pop_tail_dev_secret}"
+export POP_TAIL_DATABASE_URL="${POP_TAIL_DATABASE_URL:-postgres://pop_tail:${POP_TAIL_POSTGRES_PASSWORD}@postgres:5432/pop_tail_auth}"
+export POP_TAIL_REDIS_URL="${POP_TAIL_REDIS_URL:-redis://redis:6379/0}"
+export POP_TAIL_JWT_SECRET="${POP_TAIL_JWT_SECRET:-pop-tail-dev-secret-change-me-1234567890}"
+export POP_TAIL_SERVICE_MODERATION_TOKEN="${POP_TAIL_SERVICE_MODERATION_TOKEN:-pop-tail-moderation-token-dev-1234567890}"
+export POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD="${POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD:-123456}"
+export POP_TAIL_DEFAULT_USER_PASSWORD="${POP_TAIL_DEFAULT_USER_PASSWORD:-123456}"
+export POP_TAIL_MULTIPOINT_ENABLED="${POP_TAIL_MULTIPOINT_ENABLED:-true}"
+export POP_TAIL_COMPATIBILITY_REFRESH_HEADERS="${POP_TAIL_COMPATIBILITY_REFRESH_HEADERS:-true}"
+export RUST_LOG="${RUST_LOG:-info}"
+
+docker compose -f "$ROOT_DIR/docker-compose.yml" up -d --build backend

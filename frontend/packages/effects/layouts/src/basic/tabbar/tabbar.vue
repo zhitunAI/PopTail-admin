@@ -25,6 +25,7 @@ const route = useRoute();
 const tabbarStore = useTabbarStore();
 const { contentIsMaximize, toggleMaximize } = useContentMaximize();
 const { refreshTab, unpinTab } = useTabs();
+const PAGE_REFRESH_EVENT = 'gaa:page-refresh';
 
 const {
   createContextMenus,
@@ -50,6 +51,22 @@ const menus = computed(() => {
 if (!preferences.tabbar.persist) {
   tabbarStore.closeOtherTabs(route);
 }
+
+async function handleRefresh() {
+  const event = new CustomEvent(PAGE_REFRESH_EVENT, {
+    cancelable: true,
+    detail: {
+      name: typeof route.name === 'string' ? route.name : null,
+      path: route.path,
+    },
+  });
+  const handled =
+    typeof window !== 'undefined' && !window.dispatchEvent(event);
+  if (handled) {
+    return;
+  }
+  await refreshTab();
+}
 </script>
 
 <template>
@@ -72,7 +89,7 @@ if (!preferences.tabbar.persist) {
     <TabsToolMore v-if="preferences.tabbar.showMore" :menus="menus" />
     <TabsToolRefresh
       v-if="preferences.tabbar.showRefresh"
-      @refresh="refreshTab"
+      @refresh="handleRefresh"
     />
     <TabsToolScreen
       v-if="preferences.tabbar.showMaximize"

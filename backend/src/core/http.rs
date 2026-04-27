@@ -25,7 +25,7 @@ fn read_bool_env(key: &str, default: bool) -> bool {
 }
 
 fn read_cookie_same_site() -> String {
-    let value = std::env::var("GAA_COOKIE_SAMESITE").unwrap_or_else(|_| "Lax".to_string());
+    let value = std::env::var("POP_TAIL_COOKIE_SAMESITE").unwrap_or_else(|_| "Lax".to_string());
     match value.to_ascii_lowercase().as_str() {
         "strict" => "Strict".to_string(),
         "none" => "None".to_string(),
@@ -34,7 +34,7 @@ fn read_cookie_same_site() -> String {
 }
 
 fn read_cookie_domain() -> Option<String> {
-    std::env::var("GAA_COOKIE_DOMAIN")
+    std::env::var("POP_TAIL_COOKIE_DOMAIN")
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
@@ -48,7 +48,7 @@ fn build_auth_cookie(name: &str, value: &str, max_age_sec: i64) -> String {
         format!("Max-Age={}", max_age_sec.max(0)),
         format!("SameSite={}", read_cookie_same_site()),
     ];
-    if read_bool_env("GAA_COOKIE_SECURE", is_production_env()) {
+    if read_bool_env("POP_TAIL_COOKIE_SECURE", is_production_env()) {
         parts.push("Secure".to_string());
     }
     if let Some(domain) = read_cookie_domain() {
@@ -94,7 +94,7 @@ pub fn resolve_access_token(headers: &HeaderMap) -> Option<String> {
         headers.get("authorization").and_then(|v| v.to_str().ok()),
     );
     header_token.or_else(|| {
-        if read_bool_env("GAA_ALLOW_COOKIE_AUTH", false) {
+        if read_bool_env("POP_TAIL_ALLOW_COOKIE_AUTH", false) {
             extract_cookie_value(
                 headers.get("cookie").and_then(|v| v.to_str().ok()),
                 ACCESS_TOKEN_COOKIE,
@@ -135,8 +135,10 @@ pub async fn enforce_route_access(
 }
 
 fn is_public_route(path: &str) -> bool {
-    matches!(path, "/healthz" | "/base/login" | "/base/refresh")
-        || path.starts_with("/public/")
+    matches!(
+        path,
+        "/healthz" | "/base/login" | "/base/refresh" | "/base/logout"
+    ) || path.starts_with("/public/")
         || path == "/ai/moderation/decision"
 }
 
@@ -191,7 +193,7 @@ pub fn sanitize_upload_name(name: &str) -> String {
 }
 
 fn is_production_env() -> bool {
-    std::env::var("GAA_ENV")
+    std::env::var("POP_TAIL_ENV")
         .or_else(|_| std::env::var("RUST_ENV"))
         .or_else(|_| std::env::var("APP_ENV"))
         .map(|value| matches!(value.to_ascii_lowercase().as_str(), "prod" | "production"))

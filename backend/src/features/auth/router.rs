@@ -5,7 +5,7 @@ use crate::state::AppState;
 
 use crate::core::http::health;
 
-use super::{login, logout, refresh, switch_authority, update_profile, user_info, user_upsert};
+use super::{bootstrap_payload, login, logout, refresh, switch_authority, update_profile, user_info, user_upsert};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -13,6 +13,7 @@ pub fn router() -> Router<AppState> {
         .route("/base/login", post(login))
         .route("/base/refresh", post(refresh))
         .route("/base/logout", post(logout))
+        .route("/user/bootstrap", get(bootstrap_payload))
         .route("/user/getUserInfo", get(user_info))
         .route("/user/updateProfile", post(update_profile))
         .route("/user/saveUser", post(user_upsert))

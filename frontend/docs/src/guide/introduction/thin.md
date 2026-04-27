@@ -11,8 +11,6 @@ outline: deep
 首先，确认你需要的 `UI` 组件库版本，然后删除对应的应用，比如你选择使用 `Ant Design Vue`，那么你可以删除其他应用， 只需要删除下面两个文件夹即可：
 
 ```bash
-apps/web-ele
-apps/web-naive
 
 ```
 
@@ -24,7 +22,6 @@ apps/web-naive
 
 ## 演示代码精简
 
-如果你不需要演示代码，你可以直接删除 `playground` 文件夹。
 
 ## 文档精简
 
@@ -32,7 +29,7 @@ apps/web-naive
 
 ## Mock 服务精简
 
-如果你不需要`Mock`服务，你可以直接删除`apps/backend-mock`文件夹。同时在你的应用下`.env.development`文件中删除`VITE_NITRO_MOCK`变量。
+如果你不需要`Mock`服务，你可以直接删除`mock 服务`文件夹。同时在你的应用下`.env.development`文件中删除`VITE_NITRO_MOCK`变量。
 
 ```bash
 # 是否开启 Nitro Mock服务，true 为开启，false 为关闭
@@ -57,16 +54,9 @@ pnpm install
 {
   "scripts": {
     "build:antd": "pnpm run build --filter=@vben/web-antd",
-    "build:docs": "pnpm run build --filter=@vben/docs",
-    "build:ele": "pnpm run build --filter=@vben/web-ele",
-    "build:naive": "pnpm run build --filter=@vben/web-naive",
-    "build:tdesign": "pnpm run build --filter=@vben/web-tdesign",
-    "build:play": "pnpm run build --filter=@vben/playground",
+    "build:docs": "pnpm run build --filter=@pop-tail/docs",
     "dev:antd": "pnpm -F @vben/web-antd run dev",
-    "dev:docs": "pnpm -F @vben/docs run dev",
-    "dev:ele": "pnpm -F @vben/web-ele run dev",
-    "dev:play": "pnpm -F @vben/playground run dev",
-    "dev:naive": "pnpm -F @vben/web-naive run dev"
+    "dev:docs": "pnpm -F @pop-tail/docs run dev",
   }
 }
 ```

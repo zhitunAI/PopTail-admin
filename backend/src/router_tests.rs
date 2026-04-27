@@ -197,10 +197,132 @@ async fn refresh_returns_new_access_token() {
 }
 
 #[tokio::test]
-async fn logout_revokes_current_session() {
+async fn update_profile_without_password_keeps_existing_login_password() {
     let state = AppState::seed().await.expect("seed failed");
     let app = build_router(state);
     let (token, _) = login_tokens(&app).await;
+
+    let update_request = Request::builder()
+        .method("POST")
+        .uri("/user/updateProfile")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token.clone())
+        .body(Body::from(
+            json!({
+                "nickName": "资料已更新",
+                "phone": "13800138001",
+                "email": "admin-updated@gaa.local"
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let update_response = app
+        .clone()
+        .oneshot(update_request)
+        .await
+        .expect("request failed");
+    assert_eq!(update_response.status(), StatusCode::OK);
+
+    let login_request = Request::builder()
+        .method("POST")
+        .uri("/base/login")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "username": "admin",
+                "password": "123456"
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let login_response = app.oneshot(login_request).await.expect("request failed");
+    assert_eq!(login_response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn update_profile_with_password_changes_login_password() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let update_request = Request::builder()
+        .method("POST")
+        .uri("/user/updateProfile")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token.clone())
+        .body(Body::from(
+            json!({
+                "nickName": "资料已更新",
+                "phone": "13800138001",
+                "email": "admin-updated@gaa.local",
+                "password": "654321"
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let update_response = app
+        .clone()
+        .oneshot(update_request)
+        .await
+        .expect("request failed");
+    assert_eq!(update_response.status(), StatusCode::OK);
+
+    let old_login_request = Request::builder()
+        .method("POST")
+        .uri("/base/login")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "username": "admin",
+                "password": "123456"
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let old_login_response = app
+        .clone()
+        .oneshot(old_login_request)
+        .await
+        .expect("request failed");
+    assert_eq!(old_login_response.status(), StatusCode::UNAUTHORIZED);
+
+    let stale_user_request = Request::builder()
+        .method("GET")
+        .uri("/user/getUserInfo")
+        .header("x-token", token.clone())
+        .body(Body::empty())
+        .expect("request build failed");
+    let stale_user_response = app
+        .clone()
+        .oneshot(stale_user_request)
+        .await
+        .expect("request failed");
+    assert_eq!(stale_user_response.status(), StatusCode::UNAUTHORIZED);
+
+    let new_login_request = Request::builder()
+        .method("POST")
+        .uri("/base/login")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "username": "admin",
+                "password": "654321"
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let new_login_response = app
+        .oneshot(new_login_request)
+        .await
+        .expect("request failed");
+    assert_eq!(new_login_response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn logout_revokes_current_session() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, refresh_token) = login_tokens(&app).await;
 
     let logout_request = Request::builder()
         .method("POST")
@@ -221,8 +343,26 @@ async fn logout_revokes_current_session() {
         .header("x-token", token)
         .body(Body::empty())
         .expect("request build failed");
-    let user_response = app.oneshot(user_request).await.expect("request failed");
+    let user_response = app
+        .clone()
+        .oneshot(user_request)
+        .await
+        .expect("request failed");
     assert_eq!(user_response.status(), StatusCode::UNAUTHORIZED);
+
+    let refresh_request = Request::builder()
+        .method("POST")
+        .uri("/base/refresh")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "refreshToken": refresh_token
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let refresh_response = app.oneshot(refresh_request).await.expect("request failed");
+    assert_eq!(refresh_response.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]
@@ -357,6 +497,133 @@ async fn switch_authority_updates_user_and_token() {
     let payload = response_json(switch_response).await;
     assert_eq!(payload["data"]["user"]["authorityId"], 9528);
     assert!(payload["data"]["token"].as_str().is_some());
+    assert!(payload["data"]["refreshToken"].as_str().is_some());
+}
+
+#[tokio::test]
+async fn refresh_after_switch_authority_keeps_switched_role() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let switch_request = Request::builder()
+        .method("POST")
+        .uri("/user/switchAuthority")
+        .header("x-token", token)
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "authorityId": 9528
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let switch_response = app
+        .clone()
+        .oneshot(switch_request)
+        .await
+        .expect("request failed");
+    assert_eq!(switch_response.status(), StatusCode::OK);
+    let switch_payload = response_json(switch_response).await;
+    let switched_refresh_token = switch_payload["data"]["refreshToken"]
+        .as_str()
+        .expect("switched refresh token missing")
+        .to_string();
+
+    let refresh_request = Request::builder()
+        .method("POST")
+        .uri("/base/refresh")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "refreshToken": switched_refresh_token
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let refresh_response = app
+        .clone()
+        .oneshot(refresh_request)
+        .await
+        .expect("request failed");
+    assert_eq!(refresh_response.status(), StatusCode::OK);
+    let refresh_payload = response_json(refresh_response).await;
+    let refreshed_access_token = refresh_payload["data"]["token"]
+        .as_str()
+        .expect("refreshed access token missing");
+
+    let user_request = Request::builder()
+        .method("GET")
+        .uri("/user/getUserInfo")
+        .header("x-token", refreshed_access_token)
+        .body(Body::empty())
+        .expect("request build failed");
+    let user_response = app.oneshot(user_request).await.expect("request failed");
+    assert_eq!(user_response.status(), StatusCode::OK);
+    let user_payload = response_json(user_response).await;
+    assert_eq!(user_payload["data"]["userInfo"]["authorityId"], json!(9528));
+}
+
+#[tokio::test]
+async fn switched_role_can_still_logout() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let switch_request = Request::builder()
+        .method("POST")
+        .uri("/user/switchAuthority")
+        .header("x-token", token)
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "authorityId": 9528
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let switch_response = app
+        .clone()
+        .oneshot(switch_request)
+        .await
+        .expect("request failed");
+    assert_eq!(switch_response.status(), StatusCode::OK);
+    let switch_payload = response_json(switch_response).await;
+    let switched_access_token = switch_payload["data"]["token"]
+        .as_str()
+        .expect("switched access token missing")
+        .to_string();
+    let switched_refresh_token = switch_payload["data"]["refreshToken"]
+        .as_str()
+        .expect("switched refresh token missing")
+        .to_string();
+
+    let logout_request = Request::builder()
+        .method("POST")
+        .uri("/base/logout")
+        .header("x-token", switched_access_token)
+        .body(Body::empty())
+        .expect("request build failed");
+    let logout_response = app
+        .clone()
+        .oneshot(logout_request)
+        .await
+        .expect("request failed");
+    assert_eq!(logout_response.status(), StatusCode::OK);
+
+    let refresh_request = Request::builder()
+        .method("POST")
+        .uri("/base/refresh")
+        .header(CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            json!({
+                "refreshToken": switched_refresh_token
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let refresh_response = app.oneshot(refresh_request).await.expect("request failed");
+    assert_eq!(refresh_response.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]
@@ -399,9 +666,9 @@ async fn non_admin_role_cannot_access_system_config() {
 }
 
 #[tokio::test]
-async fn multipoint_login_invalidates_previous_session_when_enabled() {
+async fn single_point_login_invalidates_previous_session_when_multipoint_disabled() {
     let state = AppState::seed_with_config(crate::state::AppConfig {
-        multipoint_enabled: true,
+        multipoint_enabled: false,
         ..crate::state::AppConfig::default()
     })
     .await
@@ -432,6 +699,31 @@ async fn multipoint_login_invalidates_previous_session_when_enabled() {
         .expect("request build failed");
     let current_response = app.oneshot(current_request).await.expect("request failed");
     assert_eq!(current_response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn multipoint_login_keeps_previous_session_when_enabled() {
+    let state = AppState::seed_with_config(crate::state::AppConfig {
+        multipoint_enabled: true,
+        ..crate::state::AppConfig::default()
+    })
+    .await
+    .expect("seed failed");
+    let app = build_router(state);
+
+    let (first_token, _) = login_tokens(&app).await;
+    let (second_token, _) = login_tokens(&app).await;
+
+    for token in [first_token, second_token] {
+        let request = Request::builder()
+            .method("GET")
+            .uri("/user/getUserInfo")
+            .header("x-token", token)
+            .body(Body::empty())
+            .expect("request build failed");
+        let response = app.clone().oneshot(request).await.expect("request failed");
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }
 
 #[tokio::test]
@@ -780,6 +1072,65 @@ async fn authority_permission_endpoints_round_trip() {
 }
 
 #[tokio::test]
+async fn get_authority_buttons_batch_returns_multiple_menu_results() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let set_button_request = Request::builder()
+        .method("POST")
+        .uri("/authorityBtn/setAuthorityBtn")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token.clone())
+        .body(Body::from(
+            json!({
+                "authorityId": 9528,
+                "menuID": 22,
+                "selected": [2201, 2202]
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let set_button_response = app
+        .clone()
+        .oneshot(set_button_request)
+        .await
+        .expect("request failed");
+    assert_eq!(set_button_response.status(), StatusCode::OK);
+
+    let batch_request = Request::builder()
+        .method("POST")
+        .uri("/authorityBtn/getAuthorityBtns")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token)
+        .body(Body::from(
+            json!({
+                "authorityId": 9528,
+                "menuIDs": [21, 22]
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let batch_response = app.oneshot(batch_request).await.expect("request failed");
+    assert_eq!(batch_response.status(), StatusCode::OK);
+    let payload = response_json(batch_response).await;
+    let items = payload["data"].as_array().expect("data should be an array");
+    assert_eq!(items.len(), 2);
+
+    let menu_21 = items
+        .iter()
+        .find(|item| item["menuID"] == 21)
+        .expect("menu 21 should exist");
+    let menu_22 = items
+        .iter()
+        .find(|item| item["menuID"] == 22)
+        .expect("menu 22 should exist");
+
+    assert!(menu_21["selected"].is_array());
+    assert_eq!(menu_22["selected"], json!([2201, 2202]));
+}
+
+#[tokio::test]
 async fn save_menu_updates_title() {
     let state = AppState::seed().await.expect("seed failed");
     let app = build_router(state);
@@ -812,6 +1163,124 @@ async fn save_menu_updates_title() {
     assert_eq!(response.status(), StatusCode::OK);
     let payload = response_json(response).await;
     assert_eq!(payload["data"]["meta"]["title"], "菜单维护");
+}
+
+#[tokio::test]
+async fn save_menus_updates_multiple_menu_sorts_in_one_request() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/menu/saveMenus")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token.clone())
+        .body(Body::from(
+            json!({
+                "menus": [
+                    {
+                        "ID": 1,
+                        "parentId": 0,
+                        "name": "dashboard",
+                        "path": "/dashboard",
+                        "component": "views/DashboardView.vue",
+                        "sort": 20,
+                        "hidden": false,
+                        "meta": {
+                            "title": "仪表盘1",
+                            "icon": "layout-dashboard"
+                        }
+                    },
+                    {
+                        "ID": 3,
+                        "parentId": 0,
+                        "name": "profile",
+                        "path": "/profile",
+                        "component": "views/ProfileView.vue",
+                        "sort": 10,
+                        "hidden": false,
+                        "meta": {
+                            "title": "个人中心",
+                            "icon": "user-circle"
+                        }
+                    }
+                ]
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+
+    let response = app.clone().oneshot(request).await.expect("request failed");
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload = response_json(response).await;
+    let saved_items = payload["data"].as_array().expect("data should be an array");
+    assert_eq!(saved_items.len(), 2);
+
+    let list_request = Request::builder()
+        .method("POST")
+        .uri("/menu/getMenuList")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token)
+        .body(Body::from("{}"))
+        .expect("request build failed");
+    let list_response = app.oneshot(list_request).await.expect("request failed");
+    assert_eq!(list_response.status(), StatusCode::OK);
+    let list_payload = response_json(list_response).await;
+    let items = list_payload["data"]["List"]
+        .as_array()
+        .expect("menu list should be an array");
+
+    let dashboard = items
+        .iter()
+        .find(|item| item["ID"] == 1)
+        .expect("dashboard menu should exist");
+    let profile = items
+        .iter()
+        .find(|item| item["ID"] == 3)
+        .expect("profile menu should exist");
+
+    assert_eq!(dashboard["sort"], 20);
+    assert_eq!(profile["sort"], 10);
+}
+
+#[tokio::test]
+async fn delete_menu_removes_menu_and_descendants() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (token, _) = login_tokens(&app).await;
+
+    let delete_request = Request::builder()
+        .method("POST")
+        .uri("/menu/deleteBaseMenu")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token.clone())
+        .body(Body::from(json!({ "ID": 29 }).to_string()))
+        .expect("request build failed");
+    let delete_response = app
+        .clone()
+        .oneshot(delete_request)
+        .await
+        .expect("request failed");
+    assert_eq!(delete_response.status(), StatusCode::OK);
+
+    let list_request = Request::builder()
+        .method("POST")
+        .uri("/menu/getMenuList")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", token)
+        .body(Body::from("{}"))
+        .expect("request build failed");
+    let list_response = app.oneshot(list_request).await.expect("request failed");
+    assert_eq!(list_response.status(), StatusCode::OK);
+    let payload = response_json(list_response).await;
+    let items = payload["data"]["List"]
+        .as_array()
+        .expect("menu list should be an array");
+    assert!(
+        items.iter().all(|item| item["ID"] != 29 && item["ID"] != 291 && item["ID"] != 295),
+        "deleted menu and children should be removed"
+    );
 }
 
 #[tokio::test]
@@ -886,7 +1355,7 @@ async fn set_system_config_updates_redis_url() {
         .body(Body::from(
             json!({
                 "bindAddress": "0.0.0.0:8888",
-                "databaseUrl": "postgres://gaa:gaa@postgres:5432/gaa",
+                "databaseUrl": "postgres://pop_tail:gaa@postgres:5432/gaa",
                 "redisUrl": "redis://redis:6379",
                 "multipointEnabled": true,
                 "compatibilityRefreshHeaders": true
@@ -901,8 +1370,52 @@ async fn set_system_config_updates_redis_url() {
     assert_eq!(payload["data"]["redisUrl"], "redis://redis:6379");
     assert_eq!(
         payload["data"]["databaseUrl"],
-        "postgres://gaa:****@postgres:5432/gaa"
+        "postgres://pop_tail:****@postgres:5432/gaa"
     );
+}
+
+#[tokio::test]
+async fn enabling_multipoint_via_system_config_keeps_existing_sessions_alive() {
+    let state = AppState::seed().await.expect("seed failed");
+    let app = build_router(state);
+    let (admin_token, _) = login_tokens(&app).await;
+
+    let config_request = Request::builder()
+        .method("POST")
+        .uri("/system/setSystemConfig")
+        .header(CONTENT_TYPE, "application/json")
+        .header("x-token", admin_token.clone())
+        .body(Body::from(
+            json!({
+                "bindAddress": "0.0.0.0:8888",
+                "databaseUrl": "postgres://pop_tail:gaa@postgres:5432/gaa",
+                "redisUrl": "redis://redis:6379",
+                "multipointEnabled": true,
+                "compatibilityRefreshHeaders": true
+            })
+            .to_string(),
+        ))
+        .expect("request build failed");
+    let config_response = app
+        .clone()
+        .oneshot(config_request)
+        .await
+        .expect("request failed");
+    assert_eq!(config_response.status(), StatusCode::OK);
+
+    let (first_token, _) = login_tokens(&app).await;
+    let (second_token, _) = login_tokens(&app).await;
+
+    for token in [first_token, second_token] {
+        let request = Request::builder()
+            .method("GET")
+            .uri("/user/getUserInfo")
+            .header("x-token", token)
+            .body(Body::empty())
+            .expect("request build failed");
+        let response = app.clone().oneshot(request).await.expect("request failed");
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }
 
 #[tokio::test]

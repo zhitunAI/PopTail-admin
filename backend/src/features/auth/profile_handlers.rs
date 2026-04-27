@@ -72,8 +72,8 @@ pub async fn switch_authority(
         ));
     }
 
-    let (user, new_token, expires_at) = state
-        .switch_authority(&auth.session_id, auth.user.id, body.authority_id)
+    let (user, new_token, expires_at, refresh_token) = state
+        .switch_authority(auth.user.id, auth.token_version, body.authority_id)
         .await
         .map_err(|err| {
             (
@@ -87,6 +87,7 @@ pub async fn switch_authority(
             user,
             token: new_token.clone(),
             expires_at,
+            refresh_token: Some(refresh_token.clone()),
         },
         "修改成功",
     );
@@ -107,6 +108,10 @@ pub async fn switch_authority(
         &new_token,
         state.config.auth.access_ttl_sec,
     );
+    append_refresh_cookie(
+        response.headers_mut(),
+        &refresh_token,
+        state.config.auth.refresh_ttl_sec,
+    );
     Ok(response)
 }
-

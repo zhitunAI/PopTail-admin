@@ -44,12 +44,12 @@ export const shared = defineConfig({
       },
       provider: 'local',
     },
-    siteTitle: 'Vben Admin',
+    siteTitle: 'PopTail-admin',
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vbenjs/vue-vben-admin' },
+      { icon: 'github', link: 'https://github.com/zhitunAI/PopTail-admin' },
     ],
   },
-  title: 'Vben Admin',
+  title: 'PopTail-admin',
   vite: {
     build: {
       chunkSizeWarningLimit: Infinity,
@@ -86,7 +86,7 @@ export const shared = defineConfig({
             username: 'likui628',
           },
         ],
-        repoURL: () => 'https://github.com/vbenjs/vue-vben-admin',
+        repoURL: () => 'https://github.com/zhitunAI/PopTail-admin',
       }),
       GitChangelogMarkdownSection(),
       viteArchiverPlugin({ outputDir: '.vitepress' }),
@@ -142,7 +142,7 @@ function pwa(): PwaOptions {
     includeManifestIcons: false,
     manifest: {
       description:
-        'Vben Admin is a modern admin dashboard template based on Vue 3. ',
+        'PopTail-admin is a modern admin dashboard template based on Vue 3. ',
       icons: [
         {
           sizes: '192x192',
@@ -156,7 +156,7 @@ function pwa(): PwaOptions {
         },
       ],
       id: '/',
-      name: 'Vben Admin Doc',
+      name: 'PopTail-admin Doc',
       short_name: 'vben_admin_doc',
       theme_color: '#ffffff',
     },

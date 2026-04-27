@@ -6,11 +6,14 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
 import { accessRoutes, coreRouteNames } from '#/router/routes';
+import { getStoredToken } from '#/api/pop-tail/client';
 import {
   collectButtonAccessCodesFromRoutes,
+  isAuthenticationPath,
   normalizeAuthRoutePath,
   useAuthStore,
-} from '#/store/gin-ai-admin/auth';
+} from '#/store/pop-tail/auth';
+import { useNavigationStore } from '#/store/pop-tail/navigation';
 
 import { generateAccess } from './access';
 
@@ -20,6 +23,14 @@ function safeDecodeURIComponent(value: string) {
   } catch {
     return value;
   }
+}
+
+function resolveSafeRedirectPath(input: string, fallback: string) {
+  const normalized = normalizeAuthRoutePath(safeDecodeURIComponent(input) || fallback);
+  if (isAuthenticationPath(normalized)) {
+    return fallback;
+  }
+  return normalized;
 }
 
 /**
@@ -56,25 +67,29 @@ function setupAccessGuard(router: Router) {
     const accessStore = useAccessStore();
     const userStore = useUserStore();
     const authStore = useAuthStore();
+    const navigationStore = useNavigationStore();
+    const persistedToken = getStoredToken();
+    const activeToken = accessStore.accessToken || persistedToken;
 
     if (coreRouteNames.includes(to.name as string)) {
-      if (to.path === LOGIN_PATH && accessStore.accessToken) {
+      if (to.path === LOGIN_PATH && activeToken) {
+        if (!accessStore.accessToken && persistedToken) {
+          accessStore.setAccessToken(persistedToken);
+        }
         const restoredUser = userStore.userInfo ?? (await authStore.bootstrap());
         const fallbackPath = normalizeAuthRoutePath(
           restoredUser?.homePath || preferences.app.defaultHomePath,
         );
         const rawRedirect =
           typeof to.query?.redirect === 'string' ? to.query.redirect : '';
-        const normalizedRedirect = normalizeAuthRoutePath(
-          safeDecodeURIComponent(rawRedirect) || fallbackPath,
-        );
+        const normalizedRedirect = resolveSafeRedirectPath(rawRedirect, fallbackPath);
         const resolved = router.resolve(normalizedRedirect);
         return resolved.matched.length > 0 ? normalizedRedirect : fallbackPath;
       }
       return true;
     }
 
-    if (!accessStore.accessToken) {
+    if (!activeToken) {
       if (to.meta.ignoreAccess) {
         return true;
       }
@@ -83,13 +98,17 @@ function setupAccessGuard(router: Router) {
         return {
           path: LOGIN_PATH,
           query:
-            to.fullPath === preferences.app.defaultHomePath
+            to.fullPath === preferences.app.defaultHomePath || isAuthenticationPath(to.fullPath)
               ? {}
               : { redirect: encodeURIComponent(normalizeAuthRoutePath(to.fullPath)) },
           replace: true,
         };
       }
       return to;
+    }
+
+    if (!accessStore.accessToken && persistedToken) {
+      accessStore.setAccessToken(persistedToken);
     }
 
     if (!userStore.userInfo) {
@@ -115,7 +134,12 @@ function setupAccessGuard(router: Router) {
       routes: accessRoutes,
     });
 
-    accessStore.setAccessMenus(accessibleMenus);
+    try {
+      const backendMenus = await navigationStore.loadAccessMenus(accessibleRoutes);
+      accessStore.setAccessMenus(backendMenus.length > 0 ? backendMenus : accessibleMenus);
+    } catch {
+      accessStore.setAccessMenus(accessibleMenus);
+    }
     accessStore.setAccessRoutes(accessibleRoutes);
     accessStore.setAccessCodes([
       ...new Set([
@@ -130,13 +154,12 @@ function setupAccessGuard(router: Router) {
     );
     const pendingRedirect =
       typeof from.query.redirect === 'string' && from.query.redirect
-        ? safeDecodeURIComponent(from.query.redirect)
+        ? from.query.redirect
         : '';
-    const redirectPath = normalizeAuthRoutePath(
+    const redirectPath = resolveSafeRedirectPath(
       pendingRedirect ||
-        (to.path === preferences.app.defaultHomePath
-          ? defaultHomePath
-          : to.fullPath),
+        (to.path === preferences.app.defaultHomePath ? defaultHomePath : to.fullPath),
+      defaultHomePath,
     );
     const resolved = router.resolve(redirectPath);
 

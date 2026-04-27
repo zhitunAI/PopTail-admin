@@ -1,7 +1,7 @@
 use axum::body::Body;
 use axum::http::header::CONTENT_TYPE;
 use axum::http::{Request, StatusCode};
-use gaa_auth::{build_router, state::AppState};
+use pop_tail_auth::{build_router, state::AppState};
 use serde_json::{Value, json};
 use tower::ServiceExt;
 

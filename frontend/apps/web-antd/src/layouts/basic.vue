@@ -73,7 +73,7 @@ const notifications = ref<NotificationItem[]>([
     isRead: false,
     message: '描述信息描述信息描述信息',
     title: '跳转外部链接示例',
-    link: 'https://doc.vben.pro',
+    link: 'https://github.com/zhitunAI/PopTail-admin',
   },
 ]);
 
@@ -129,7 +129,7 @@ const avatar = computed(() => {
 });
 
 const userDropdownDescription = computed(() => {
-  return userStore.userInfo?.desc || 'Gin AI Admin';
+  return userStore.userInfo?.desc || 'PopTail-admin';
 });
 
 const userDropdownTagText = computed(() => {
@@ -176,7 +176,7 @@ function handleMakeAll() {
   notifications.value.forEach((item) => (item.isRead = true));
 }
 
-const viewAll = () => {};
+const viewAll = () => { };
 
 const handleClick = (item: NotificationItem) => {
   // 如果通知项有链接，点击时跳转
@@ -192,7 +192,7 @@ function navigateTo(
 ) {
   if (link.startsWith('http://') || link.startsWith('https://')) {
     // 外部链接，在新标签页打开
-    window.open(link, '_blank', 'noopener,noreferrer');
+    window.open(link, '_blank');
   } else {
     // 内部路由链接，支持 query 参数和 state
     router.push({
@@ -228,32 +228,16 @@ watch(
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
     <template #user-dropdown>
-      <UserDropdown
-        :avatar
-        :menus
-        :text="userStore.userInfo?.realName"
-        :description="userDropdownDescription"
-        :tag-text="userDropdownTagText"
-        @logout="handleLogout"
-      />
+      <UserDropdown :avatar :menus :text="userStore.userInfo?.realName" :description="userDropdownDescription"
+        :tag-text="userDropdownTagText" @logout="handleLogout" />
     </template>
     <template #notification>
-      <Notification
-        :dot="showDot"
-        :notifications="notifications"
-        @clear="handleNoticeClear"
-        @read="(item) => item.id && markRead(item.id)"
-        @remove="(item) => item.id && remove(item.id)"
-        @make-all="handleMakeAll"
-        @on-click="handleClick"
-        @view-all="viewAll"
-      />
+      <Notification :dot="showDot" :notifications="notifications" @clear="handleNoticeClear"
+        @read="(item) => item.id && markRead(item.id)" @remove="(item) => item.id && remove(item.id)"
+        @make-all="handleMakeAll" @on-click="handleClick" @view-all="viewAll" />
     </template>
     <template #extra>
-      <AuthenticationLoginExpiredModal
-        v-model:open="accessStore.loginExpired"
-        :avatar
-      >
+      <AuthenticationLoginExpiredModal v-model:open="accessStore.loginExpired" :avatar>
         <LoginForm />
       </AuthenticationLoginExpiredModal>
     </template>

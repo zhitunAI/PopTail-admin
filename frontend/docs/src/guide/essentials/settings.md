@@ -31,7 +31,7 @@
 
 ```bash [.env]
 # 应用标题
-VITE_APP_TITLE=Vben Admin
+VITE_APP_TITLE=PopTail-admin
 
 # 应用命名空间，用于缓存、store等功能的前缀，确保隔离
 VITE_APP_NAMESPACE=vben-web-antd
@@ -339,8 +339,6 @@ updateCustomPreferences<ProjectPreferencesExtension>({
 
 完整示例可以参考：
 
-- `playground/src/preferences.ts`
-- `playground/src/views/demos/features/preferences-extension/index.vue`
 
 ### 框架默认配置
 
@@ -374,7 +372,7 @@ const defaultPreferences: Preferences = {
     layout: 'sidebar-nav',
     locale: 'zh-CN',
     loginExpiredMode: 'page',
-    name: 'Vben Admin',
+    name: 'PopTail-admin',
     preferencesButtonPosition: 'auto',
     watermark: false,
     zIndex: 200,
@@ -388,7 +386,7 @@ const defaultPreferences: Preferences = {
   },
   copyright: {
     companyName: 'Vben',
-    companySiteLink: 'https://www.vben.pro',
+    companySiteLink: 'https://github.com/zhitunAI/PopTail-admin',
     date: '2024',
     enable: true,
     icp: '',

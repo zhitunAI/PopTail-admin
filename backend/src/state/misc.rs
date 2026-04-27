@@ -178,7 +178,7 @@ impl AppState {
                 .map(|value| value.get())
                 .unwrap_or(1),
             rust_version: env!("CARGO_PKG_VERSION").to_string(),
-            db_backend: std::env::var("GAA_DATABASE_URL")
+            db_backend: std::env::var("POP_TAIL_DATABASE_URL")
                 .ok()
                 .filter(|value| !value.is_empty())
                 .map(|value| {
@@ -189,7 +189,7 @@ impl AppState {
                     }
                 })
                 .unwrap_or_else(|| "sqlite".to_string()),
-            redis_enabled: std::env::var("GAA_REDIS_URL")
+            redis_enabled: std::env::var("POP_TAIL_REDIS_URL")
                 .map(|value| !value.is_empty())
                 .unwrap_or(false),
         }

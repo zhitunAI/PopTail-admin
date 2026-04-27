@@ -142,10 +142,16 @@ export function useTabsViewScroll(props: TabsProps) {
     scrollIsAtRight.value = right;
   }, 100);
 
-  function handleWheel({ deltaY }: WheelEvent) {
+  function handleWheel({ deltaX, deltaY }: WheelEvent) {
+    const dominantDelta =
+      Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+
+    if (!dominantDelta) {
+      return;
+    }
+
     scrollViewportEl.value?.scrollBy({
-      // behavior: 'smooth',
-      left: deltaY * 3,
+      left: dominantDelta * 1.25,
     });
   }
 

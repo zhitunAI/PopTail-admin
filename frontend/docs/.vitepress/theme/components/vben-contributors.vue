@@ -3,7 +3,7 @@
 <template>
   <div class="vben-contributors vp-doc">
     <p>Contributors</p>
-    <a href="https://github.com/vbenjs/vue-vben-admin/graphs/contributors">
+    <a href="https://github.com/zhitunAI/PopTail-admin/graphs/contributors">
       <img
         alt="Contributors"
         src="https://opencollective.com/vbenjs/contributors.svg?button=false"

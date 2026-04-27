@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 backend/target/
+desktop-shell/src-tauri/target/
 backend/gaa_auth.db
 frontend/node_modules/
 frontend/**/node_modules/
@@ -12,3 +13,4 @@ frontend/.vite/
 frontend/.cache/
 public-frontend/.next/
 public-frontend/node_modules/
+.run/

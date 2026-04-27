@@ -576,31 +576,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gaa-auth"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "axum",
- "casbin",
- "chrono",
- "hex",
- "http",
- "jsonwebtoken",
- "rand",
- "redis",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 1.0.69",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1294,6 +1269,31 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
+name = "pop-tail-auth"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "axum",
+ "casbin",
+ "chrono",
+ "hex",
+ "http",
+ "jsonwebtoken",
+ "rand",
+ "redis",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
 
 [[package]]
 name = "portable-atomic"

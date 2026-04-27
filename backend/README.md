@@ -1,8 +1,8 @@
-# GAA Auth Server (Rust)
+# PopTail Auth Server (Rust)
 
 ## Overview
 
-This server provides a compatibility-focused auth layer for GAA.
+This server provides a compatibility-focused auth layer for PopTail-admin.
 
 Implemented compatibility contracts:
 
@@ -27,14 +27,14 @@ Implemented AI operation endpoint:
 - Casbin-first authorization adapter
 - AI service identity and delegated execution checks
 - Audit records persisted for moderation decisions
-- Multipoint session coordination can use Redis when `GAA_MULTIPOINT_ENABLED=true` and `GAA_REDIS_URL` is configured
+- Multipoint session coordination can use Redis when `POP_TAIL_MULTIPOINT_ENABLED=true` and `POP_TAIL_REDIS_URL` is configured
 
 ## Persistence and environment
 
-The server prefers `GAA_DATABASE_URL` and falls back to `GAA_SQLITE_URL`. If neither is set, it defaults to local SQLite:
+The server prefers `POP_TAIL_DATABASE_URL` and falls back to `POP_TAIL_SQLITE_URL`. If neither is set, it defaults to local SQLite:
 
 ```bash
-export GAA_SQLITE_URL="sqlite://gaa_auth.db"
+export POP_TAIL_SQLITE_URL="sqlite://pop_tail_auth.db"
 ```
 
 Supported persistence targets:
@@ -48,16 +48,16 @@ On startup, persisted sessions and audits are loaded back into memory from the c
 Common environment variables:
 
 ```bash
-export GAA_BIND_ADDR="0.0.0.0:8888"
-export GAA_POSTGRES_PASSWORD="replace-with-a-strong-postgres-password"
-export GAA_DATABASE_URL="postgres://gaa:${GAA_POSTGRES_PASSWORD}@127.0.0.1:15432/gaa_auth"
-export GAA_REDIS_URL="redis://127.0.0.1:16379/0"
-export GAA_JWT_SECRET="replace-with-at-least-32-random-characters"
-export GAA_SERVICE_MODERATION_TOKEN="replace-with-at-least-32-random-characters"
-export GAA_BOOTSTRAP_ADMIN_PASSWORD="replace-with-at-least-12-random-characters"
-export GAA_DEFAULT_USER_PASSWORD="replace-with-at-least-12-random-characters"
-export GAA_MULTIPOINT_ENABLED="true"
-export GAA_COMPATIBILITY_REFRESH_HEADERS="true"
+export POP_TAIL_BIND_ADDR="0.0.0.0:8888"
+export POP_TAIL_POSTGRES_PASSWORD="replace-with-a-strong-postgres-password"
+export POP_TAIL_DATABASE_URL="postgres://pop_tail:${POP_TAIL_POSTGRES_PASSWORD}@127.0.0.1:15432/pop_tail_auth"
+export POP_TAIL_REDIS_URL="redis://127.0.0.1:16379/0"
+export POP_TAIL_JWT_SECRET="replace-with-at-least-32-random-characters"
+export POP_TAIL_SERVICE_MODERATION_TOKEN="replace-with-at-least-32-random-characters"
+export POP_TAIL_BOOTSTRAP_ADMIN_PASSWORD="replace-with-at-least-12-random-characters"
+export POP_TAIL_DEFAULT_USER_PASSWORD="replace-with-at-least-12-random-characters"
+export POP_TAIL_MULTIPOINT_ENABLED="true"
+export POP_TAIL_COMPATIBILITY_REFRESH_HEADERS="true"
 export RUST_LOG="info"
 ```
 
