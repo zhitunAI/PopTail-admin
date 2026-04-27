@@ -422,14 +422,14 @@ const drawerTitle = computed(() => (formData.value?.id ? '编辑菜单' : '新�
           <h3 class="text-base font-semibold">菜单参数配置</h3>
           <Button type="primary" @click="addParameterRow">新增菜单参数</Button>
         </div>
-        <div class="rounded-lg border border-gray-200 p-3">
-          <div class="mb-2 grid grid-cols-[140px_1fr_1fr_auto] gap-3 text-sm font-medium text-gray-500">
+        <div class="menu-config-panel rounded-lg p-3">
+          <div class="menu-config-panel__head mb-2 grid grid-cols-[140px_1fr_1fr_auto] gap-3 text-sm font-medium">
             <span>参数类型</span>
             <span>参数key</span>
             <span>参数值</span>
             <span>操作</span>
           </div>
-          <div v-if="parameterRows.length === 0" class="py-8 text-center text-gray-400">暂无数据</div>
+          <div v-if="parameterRows.length === 0" class="menu-config-panel__empty py-8 text-center">暂无数据</div>
           <div
             v-for="(item, index) in parameterRows"
             :key="`${item.ID}-${index}`"
@@ -455,13 +455,13 @@ const drawerTitle = computed(() => (formData.value?.id ? '编辑菜单' : '新�
           <h3 class="text-base font-semibold">可控按钮配置</h3>
           <Button type="primary" @click="addButtonRow">新增可控按钮</Button>
         </div>
-        <div class="rounded-lg border border-gray-200 p-3">
-          <div class="mb-2 grid grid-cols-[1fr_1fr_auto] gap-3 text-sm font-medium text-gray-500">
+        <div class="menu-config-panel rounded-lg p-3">
+          <div class="menu-config-panel__head mb-2 grid grid-cols-[1fr_1fr_auto] gap-3 text-sm font-medium">
             <span>按钮名称</span>
             <span>备注</span>
             <span>操作</span>
           </div>
-          <div v-if="buttonRows.length === 0" class="py-8 text-center text-gray-400">暂无数据</div>
+          <div v-if="buttonRows.length === 0" class="menu-config-panel__empty py-8 text-center">暂无数据</div>
           <div
             v-for="(item, index) in buttonRows"
             :key="`${item.ID}-${index}`"
@@ -476,3 +476,15 @@ const drawerTitle = computed(() => (formData.value?.id ? '编辑菜单' : '新�
     </div>
   </Drawer>
 </template>
+
+<style scoped>
+.menu-config-panel {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card) / 0.38);
+}
+
+.menu-config-panel__head,
+.menu-config-panel__empty {
+  color: hsl(var(--muted-foreground));
+}
+</style>
